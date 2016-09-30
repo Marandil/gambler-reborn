@@ -1,0 +1,4 @@
+[submodule "mdlutils-cpp"]
+	path = mdlutils-cpp
+	url = git@github.com:Marandil/mdlutils-cpp.git
+	branch = marandil-threading-dev
