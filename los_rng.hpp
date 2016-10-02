@@ -5,12 +5,15 @@
 #ifndef GAMBLER_REBORN_LOS_RNG_HPP
 #define GAMBLER_REBORN_LOS_RNG_HPP
 
+#include <iostream>
+#include "common.hpp"
+
 namespace los_rng
 {
     class PRNG
     {
     public:
-        virtual void setSeed(uint64_t seed) = 0;
+        virtual void setSeed(integer seed) = 0;
         
         virtual uint64_t nextInt() = 0;
         
@@ -18,6 +21,7 @@ namespace los_rng
     };
     
     std::shared_ptr<PRNG> getPRNG(const char *name);
+    void generateString(uint64_t nrOfBits, std::shared_ptr<PRNG> prng);
     
     class BitSource
     {
@@ -37,10 +41,21 @@ namespace los_rng
             }
             bool r = word & 1;
             word >>= 1;
-            --bits;
+            --curr;
+            //std::cout << " < " << r << "\t" << word << "\t" << curr << "\n";
             return r;
         }
     };
+    
+    inline std::function<bit_function(integer)> get_gen(const char* name)
+    {
+        return [=](integer seed)
+            {
+                auto rng = los_rng::getPRNG(name);
+                rng->setSeed(seed);
+                return los_rng::BitSource(rng);
+            };
+    }
 }
 
 

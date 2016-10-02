@@ -2,6 +2,7 @@
 // Created by marandil on 30.09.16.
 //
 
+#include <cassert>
 #include "bit_tracker.hpp"
 
 namespace bit_tracker
@@ -62,19 +63,44 @@ namespace bit_tracker
         return idx;
     }
     
+    int check_in_range_rev(const std::vector<rational>& points, const rational& value)
+    {
+        int idx = 0;
+        for(const rational& point : points)
+        {
+            if (value <= point)
+                return idx;
+            else
+                ++idx;
+        }
+        return idx;
+    }
+    
     int BitTracker::operator()(const std::vector<rational>& points)
     {
+        static int i = 0;
         rational l = 0, r = 1;
-        
-        int range_l, range_r;
-        while((range_l = check_in_range(points, l)) != (range_r = check_in_range(points, r)))
+        //if(i >= 0 && i <= 8) std::cout << "\nF: " << points[0] << " | " << points[1] << "\n";
+    
+        int range_l = 0, range_r = check_in_range_rev(points, r);;
+        while(range_l != range_r)
         {
             bool bit = this->bit_source();
-            if(bit)	        // on 1 go right
+            if (bit)            // on 1 go right
+            {
                 l = (r + l) / 2;
-            else			// on 0 go left
+                range_l = check_in_range(points, l);
+            }
+            else            // on 0 go left
+            {
                 r = (r + l) / 2;
+                range_r = check_in_range_rev(points, r);
+            }
+            //if(i >= 0 && i <= 8) std::cout << l << "(" << range_l << ") " << r << "(" << range_r << "), [" << bit << "]\n";
+            //assert(++i != 20);
         }
+        //std::cout << "[" << range_l << "]" << (++i % 20 == 0 ? "\n" : "");
+        assert(range_l != 2);
         return range_l;
     }
 }

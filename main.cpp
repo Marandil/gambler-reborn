@@ -12,59 +12,71 @@
 
 #include "los_rng.hpp"
 
-std::deque<std::future<void>> all_tasks;
+#include "mdlutils/multithreading/thread_pool.hpp"
 
-uint64_t kdf(int N, int i, uint64_t idx, uint64_t runs)
+#include <openssl/sha.h>
+
+int concurrency = 4; // hint: std::thread::hardware_concurrency()
+
+std::deque<std::future<bool>> all_tasks;
+mdl::thread_pool pool(concurrency, mdl::thread_pool::strategy::dynamic);
+
+std::string ADD_BASE = "GAMBLER_0001";
+
+integer kdf(int N, int i, uint64_t idx, uint64_t runs)
 {
-    return N * i * idx * runs * 65547;
+    std::string input = ADD_BASE + "#" + std::to_string(idx + (i * runs) + 1); // +1 to match Julia indices
+    unsigned char buffer[32];
+    SHA256(reinterpret_cast<const unsigned char*>(input.data()), input.size(), buffer);
+    std::string key = mdl::hexify(buffer, 32);
+    //std::cout << "input : " << input << "\t";
+    //std::cout << "KEY : " << key << "\n";
+    return integer(key, 16);
 }
 
-void step_six(prob_function p, std::string pd, prob_function q, std::string qd, int N, int i,
+bool step_six(prob_function p, std::string pd, prob_function q, std::string qd, int N, int i,
               std::function<sim_function(bit_function)> sim, std::string simd,
-              std::function<bit_function(uint64_t)> gen, std::string gend, uint64_t idx, uint64_t runs)
+              std::function<bit_function(integer)> gen, std::string gend, uint64_t idx, uint64_t runs)
 {
-    std::cout << "six start\n";
+    //std::cout << "six start\n";
     bit_function bf = gen(kdf(N, i, idx, runs));
     sim_function sf = sim(bf);
     
     gambler::Gambler1D G(i, N, p, q);
     auto pair = G.run_gambler(sf);
     
-    std::cout << "six end\n";
-    //std::cout << pair.first << ", " << pair.second << std::endl;
+    //std::cout << "six end\n";
+    printf("%s;%s;%d;%d;%s;%s;%s;%zd\n", simd.c_str(), gend.c_str(), i, N, pd.c_str(), qd.c_str(), pair.first ? "true" : "false", pair.second);
+    
+    return true;
 }
 
 void step_five(prob_function p, std::string pd, prob_function q, std::string qd, int N, int i,
                std::function<sim_function(bit_function)> sim, std::string simd,
-               std::function<bit_function(uint64_t)> gen, std::string gend)
+               std::function<bit_function(integer)> gen, std::string gend)
 {
     uint64_t runs = 64;
     
     for(uint64_t idx = 0; idx < runs; ++idx)
     {
-        all_tasks.emplace_back(std::async(step_six, p, pd, q, qd, N, i, sim, simd, gen, gend, idx, runs));
+        //all_tasks.emplace_back(std::async(step_six, p, pd, q, qd, N, i, sim, simd, gen, gend, idx, runs));
         //step_six(p, pd, q, qd, N, i, sim, simd, gen, gend, idx, runs);
+        all_tasks.emplace_back(pool.async(step_six, p, pd, q, qd, N, i, sim, simd, gen, gend, idx, runs));
     }
 }
 
 void step_four(prob_function p, std::string pd, prob_function q, std::string qd, int N, int i,
                std::function<sim_function(bit_function)> sim, std::string simd)
 {
-    auto randu = [](uint64_t seed)
-        {
-            auto rng = los_rng::getPRNG("RANDU");
-            rng->setSeed(seed);
-            return los_rng::BitSource(rng);
-        };
-    
-    auto crand = [](uint64_t seed)
-        {
-            srand(seed);
-            return [](){ return rand() & 1;};
-        };
-    
-    step_five(p, pd, q, qd, N, i, sim, simd, randu, "RandU LCG");
-    step_five(p, pd, q, qd, N, i, sim, simd, crand, "FunnyRand");
+    step_five(p, pd, q, qd, N, i, sim, simd, los_rng::get_gen("RANDU"), "RandU LCG");
+    step_five(p, pd, q, qd, N, i, sim, simd, los_rng::get_gen("Mersenne"), "Mersenne Twister");
+    step_five(p, pd, q, qd, N, i, sim, simd, los_rng::get_gen("MersenneAR"), "Mersenne AR");
+    step_five(p, pd, q, qd, N, i, sim, simd, los_rng::get_gen("VS"), "Visual Studio");
+    step_five(p, pd, q, qd, N, i, sim, simd, los_rng::get_gen("C_PRG"), "C Rand");
+    step_five(p, pd, q, qd, N, i, sim, simd, los_rng::get_gen("Rand"), "Old BSD");
+    step_five(p, pd, q, qd, N, i, sim, simd, los_rng::get_gen("Minstd"), "Minstd");
+    step_five(p, pd, q, qd, N, i, sim, simd, los_rng::get_gen("Borland"), "Borland C");
+    step_five(p, pd, q, qd, N, i, sim, simd, los_rng::get_gen("CMRG"), "CMRG");
 }
 
 void step_three(prob_function p, std::string pd, prob_function q, std::string qd, int N, int i)
@@ -94,7 +106,7 @@ void step_one()
     {
         // new test: (atan(N/2 - i) / 32pi) + 0.5 (values range between 31/64 and 33/64)
         auto p = julia_prob_function("(atan(N / 2 - i) / pi) * " + delta + " + 0.5", N);
-        auto q = julia_prob_function("0.5 - (atan(N / 2 - i) / pi) * " + delta, N);
+        auto q = p.get_negative();
         
         std::string pd = "atan(..)";
         std::string qd = "atan(..)";

@@ -27,7 +27,7 @@ namespace gambler
                   uint64_t stepLoss = -1, uint64_t stepNone = 0)
                 : value(start), limit(limit), time(0), p(p), q(q), step_win(stepWin), step_none(stepNone), step_loss(stepLoss) {}
         
-        bool step_regular(sim_function random)
+        bool step_regular(sim_function& random)
         {
             rational _p = p(value, limit);
             rational _q = q(value, limit);
@@ -53,7 +53,7 @@ namespace gambler
         bool is_lost() const { return value == 0; }
         bool is_finished() const { return is_won() || is_lost(); }
         
-        std::pair<bool, uint64_t> run_gambler(sim_function random)
+        std::pair<bool, uint64_t> run_gambler(sim_function& random)
         {
             //std::cout << "TIME S : " << time << "\n";
             while(!is_finished())

@@ -9,8 +9,10 @@
 #include <memory>
 #include <set>
 #include <random>
+#include <mdlutils/string_utils.hpp>
 
 #include "los_rng.hpp"
+#include "mt19937ar.hpp"
 
 namespace los_rng
 {
@@ -28,9 +30,10 @@ namespace los_rng
         {
         }
         
-        void setSeed(uint64_t seed)
+        void setSeed(integer seed)
         {
-            this->seed = seed;
+            seed = seed % M;
+            this->seed = seed.get_ui();
         }
         
         uint64_t nextInt()
@@ -56,7 +59,7 @@ namespace los_rng
         {
         }
         
-        void setSeed(uint64_t seed)
+        void setSeed(integer seed)
         {
             prng->setSeed(seed);
         }
@@ -92,14 +95,14 @@ namespace los_rng
             reset();
         }
         
-        void setSeed(uint64_t seed)
+        void setSeed(integer seed)
         {
             x[0] = 0;
-            x[1] = seed;
+            x[1] = seed.get_ui();
             x[2] = 0;
             y[0] = 0;
             y[1] = 0;
-            y[2] = seed;
+            y[2] = seed.get_ui();
             n = 0;
         }
         
@@ -152,9 +155,9 @@ namespace los_rng
     class C_PRG : public PRNG
     {
     public:
-        void setSeed(uint64_t seed)
+        void setSeed(integer seed)
         {
-            srand(seed);
+            srand(seed.get_ui());
         }
         
         uint64_t nextInt()
@@ -176,9 +179,9 @@ namespace los_rng
             return static_cast<uint64_t>((myseed >> 16) & 0x7FFF );
         }
         
-        void setSeed(uint64_t seed)
+        void setSeed(integer seed)
         {
-            myseed = seed;
+            myseed = seed.get_ui();
             //myrand();
         }
         
@@ -199,9 +202,9 @@ namespace los_rng
             return static_cast<uint64_t>((myseed >> 16) & 0x7FFF );
         }
         
-        void setSeed(uint64_t seed)
+        void setSeed(integer seed)
         {
-            myseed = seed;
+            myseed = seed.get_ui();
             //myrand();
         }
         
@@ -217,9 +220,9 @@ namespace los_rng
     class Mersenne : public PRNG
     {
     public:
-        void setSeed(uint64_t seed)
+        void setSeed(integer seed)
         {
-            eng.seed(seed);
+            eng.seed(seed.get_ui());
         }
         
         uint64_t nextInt()
@@ -238,27 +241,25 @@ namespace los_rng
         std::mt19937_64 eng;
     };
     
-    class RandU : public PRNG
+    class MersenneAR : public PRNG
     {
     public:
-        void setSeed(uint64_t seed)
+        void setSeed(integer seed)
         {
-//        s = seed + (seed % 2 == 0 ? 1 : 0);
-            s = seed;
+            eng.srand(seed.get_ui());
         }
-        
+    
         uint64_t nextInt()
         {
-            s = (65539llu * s) & pow2m1(31);
-            return s;
+            return static_cast<uint64_t>(eng.genrand_int32());
         }
-        
+    
         uint32_t getNrOfBits()
         {
-            return 31;
+            return 32;
         }
-        
-        uint64_t s;
+    
+        mt19937ar eng{0};
     };
     
     std::shared_ptr<PRNG> getPRNG(const char *name)
@@ -338,9 +339,12 @@ namespace los_rng
         } else if (strcmp(name, "Mersenne") == 0)
         {
             return std::make_shared<Mersenne>();
+        } else if (strcmp(name, "MersenneAR") == 0)
+        {
+            return std::make_shared<MersenneAR>();
         } else if (strcmp(name, "RANDU") == 0)
         {
-            return std::make_shared<RandU>();
+            return std::make_shared<LCG>(1<<31, 65539, 0, 31);
         }
         return nullptr;
     }

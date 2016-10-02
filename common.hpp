@@ -16,5 +16,7 @@ typedef std::function<bool()> bit_function;
 typedef std::function<int(const std::vector<rational>& points)> sim_function;
 
 std::string system_output(std::string cmd);
+
+rational parse_floating_rational(std::string flt);
 	
 #endif // _COMMON_HPP

@@ -21,13 +21,23 @@ precomputed_prob_function julia_prob_function(std::string fun, uint64_t N)
         std::string row;
         iss >> row;
         //std::cout << row << "\t";
-        floating flo(row);
+        //floating flo(row);
         //std::cout << flo << "\t";
-        rational rat(flo);
+        //rational rat(flo);
         //std::cout << rat << "\n";
+        
+        rational rat = parse_floating_rational(row);
         
         tmp[i] = rat;
     }
     
+    return precomputed_prob_function(tmp);
+}
+
+precomputed_prob_function precomputed_prob_function::get_negative() const
+{
+    std::vector<rational> tmp(this->buffer);
+    for(auto& value : tmp)
+        value = 1 - value;
     return precomputed_prob_function(tmp);
 }

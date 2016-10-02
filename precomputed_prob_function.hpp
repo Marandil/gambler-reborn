@@ -21,7 +21,9 @@ public:
     
     precomputed_prob_function(const std::vector<rational>& pattern) : buffer(pattern) { }
     
-    rational operator ()(uint64_t i, uint64_t N) { return buffer[i]; }
+    rational operator ()(uint64_t i, uint64_t N) const { return buffer[i]; }
+    
+    precomputed_prob_function get_negative() const;
 };
 
 precomputed_prob_function julia_prob_function(std::string fun, uint64_t N);
