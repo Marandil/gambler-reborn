@@ -46,7 +46,7 @@ bool step_six(prob_function p, std::string pd, prob_function q, std::string qd, 
     auto pair = G.run_gambler(sf);
     
     //std::cout << "six end\n";
-    printf("%s;%s;%d;%d;%s;%s;%s;%zd\n", simd.c_str(), gend.c_str(), i, N, pd.c_str(), qd.c_str(), pair.first ? "true" : "false", pair.second);
+    printf("%s;%s;%d;%d;%s;%s;%s;%zd;\n", simd.c_str(), gend.c_str(), i, N, pd.c_str(), qd.c_str(), pair.first ? "true" : "false", pair.second);
     
     return true;
 }
@@ -55,12 +55,15 @@ void step_five(prob_function p, std::string pd, prob_function q, std::string qd,
                std::function<sim_function(bit_function)> sim, std::string simd,
                std::function<bit_function(integer)> gen, std::string gend)
 {
-    uint64_t runs = 64;
+    uint64_t runs = 1024*1024;
     
     for(uint64_t idx = 0; idx < runs; ++idx)
     {
         //all_tasks.emplace_back(std::async(step_six, p, pd, q, qd, N, i, sim, simd, gen, gend, idx, runs));
         //step_six(p, pd, q, qd, N, i, sim, simd, gen, gend, idx, runs);
+        if(pool.get_awaiting_tasks() > 65536)
+            while(pool.get_awaiting_tasks() > 1024)
+                std::this_thread::yield();
         all_tasks.emplace_back(pool.async(step_six, p, pd, q, qd, N, i, sim, simd, gen, gend, idx, runs));
     }
 }
@@ -98,10 +101,10 @@ void step_two(prob_function p, std::string pd, prob_function q, std::string qd, 
 // first entry point, tweak tested p/q pairs here and max. number of states (N)
 void step_one()
 {
-    int N = 512;
+    int N = 128;
     
     // delta - deviation from 0.5 for the upcoming tests:
-    std::string delta = "(1//128)";
+    std::string delta = "(1//64)";
     
     {
         // new test: (atan(N/2 - i) / 32pi) + 0.5 (values range between 31/64 and 33/64)
@@ -146,5 +149,6 @@ int main(int argc, const char *argv[])
     */
     step_one();
     
+    printf("sim;bs;i;N;p;q;won;len;\n");
     for(auto& f : all_tasks) f.wait();
 }
