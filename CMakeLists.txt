@@ -19,4 +19,7 @@ set(SOURCE_FILES
     los_rng.cpp los_rng.hpp mt19937ar.cpp mt19937ar.hpp)
 
 add_executable(gambler_reborn ${SOURCE_FILES})
-target_link_libraries(gambler_reborn gmp gmpxx Threads::Threads mdlutils crypto)
+target_link_libraries(gambler_reborn gmp gmpxx)
+target_link_libraries(gambler_reborn ${CMAKE_THREAD_LIBS_INIT})
+target_link_libraries(gambler_reborn mdlutils)
+target_link_libraries(gambler_reborn crypto)
