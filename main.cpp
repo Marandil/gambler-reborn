@@ -63,7 +63,7 @@ void step_five(prob_function p, std::string pd, prob_function q, std::string qd,
         //step_six(p, pd, q, qd, N, i, sim, simd, gen, gend, idx, runs);
         if(pool.get_awaiting_tasks() > 65536)
             while(pool.get_awaiting_tasks() > 1024)
-                std::this_thread::yield();
+                std::this_thread::sleep_for(std::chrono::milliseconds(500));
         all_tasks.emplace_back(pool.async(step_six, p, pd, q, qd, N, i, sim, simd, gen, gend, idx, runs));
     }
 }
