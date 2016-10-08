@@ -116,17 +116,15 @@ void step_one()
         step_two(p, pd, q, qd, N);
     }
     
-    /*
-
-    // new test: (sin((i / N) * 2pi) / delta + 0.5)
-    p(i::Int64, N::Int64) = 0.5 + (sin((i / N) * 2pi) * delta)
-    q(i::Int64, N::Int64) = 0.5 - (sin((i / N) * 2pi) * delta)
-    
-    pd = "sin(..)"
-    qd = "sin(..)"
-    step_two(p, pd, q, qd)
-     
-    */
+    {
+        // new test: (sin((i / N) * 2pi) / delta + 0.5)
+        auto p = julia_prob_function("0.5 + (sin((i / N) * 2pi) * " + delta + ")", N);
+        auto q = p.get_negative();
+        
+        std::string pd = "sin(..)";
+        std::string qd = "sin(..)";
+        step_two(p, pd, q, qd, N);
+    }
 }
 
 int main(int argc, const char *argv[])
