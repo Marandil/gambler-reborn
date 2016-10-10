@@ -129,24 +129,8 @@ void step_one()
 
 int main(int argc, const char *argv[])
 {
-    /*
-    auto my_rand = [&](){ return rand() & 1; };
-    bit_function bf = my_rand;
-    
-    bit_tracker::BitTracker BT(bf);
-    
-    auto p_const = [](uint64_t i, uint64_t N){ return 0.48; };
-    auto q_const = [](uint64_t i, uint64_t N){ return 0.52; };
-    
-    gambler::Gambler1D G(32, 64, p_const, q_const);
-    
-    //G.step_regular(BT);
-    auto p = G.run_gambler(BT);
-    
-    std::cout << p.first << ", " << p.second << std::endl;
-    */
+    printf("sim;bs;i;N;p;q;won;len;\n");
     step_one();
     
-    printf("sim;bs;i;N;p;q;won;len;\n");
     for(auto& f : all_tasks) f.wait();
 }
