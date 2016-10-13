@@ -19,7 +19,8 @@
 int concurrency = 4; // hint: std::thread::hardware_concurrency()
 
 std::deque<std::future<bool>> all_tasks;
-mdl::thread_pool pool(concurrency, mdl::thread_pool::strategy::dynamic);
+//mdl::thread_pool pool(concurrency, mdl::thread_pool::strategy::dynamic);
+mdl::thread_pool pool(concurrency, mdl::thread_pool::strategy::power2choices);
 
 std::string ADD_BASE = "GAMBLER_0001";
 
@@ -55,7 +56,7 @@ void step_five(prob_function p, std::string pd, prob_function q, std::string qd,
                std::function<sim_function(bit_function)> sim, std::string simd,
                std::function<bit_function(integer)> gen, std::string gend)
 {
-    uint64_t runs = 1024*1024;
+    uint64_t runs = 128 * 1024;
     
     for(uint64_t idx = 0; idx < runs; ++idx)
     {
