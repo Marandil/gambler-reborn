@@ -56,7 +56,7 @@ void step_five(prob_function p, std::string pd, prob_function q, std::string qd,
                std::function<sim_function(bit_function)> sim, std::string simd,
                std::function<bit_function(integer)> gen, std::string gend)
 {
-    uint64_t runs = 128 * 1024;
+    uint64_t runs = 16;
     
     for(uint64_t idx = 0; idx < runs; ++idx)
     {
@@ -107,10 +107,18 @@ void step_one()
     // delta - deviation from 0.5 for the upcoming tests:
     std::string delta = "(1//16)";
     
+    // plots for WolframAlpha: plot {
+    //                                  0.5 + (sin((x / 128) * 2pi)/2 * 1/16),
+    //                                  0.5 + (atan(128 / 2 - x) / pi) * 1/16,
+    //                                  0.5 - (asin(2x/128 - 1) / pi) * 1/16
+    //                              }  for x in [0, 128]
+    
     {
-        // new test: (atan(N/2 - i) / 32pi) + 0.5 (values range between 31/64 and 33/64)
+        // new test: (atan(N/2 - i) / pi * delta) + 0.5 (values range between 31/64 and 33/64)
         auto p = julia_prob_function("0.5 + (atan(N / 2 - i) / pi) * " + delta, N);
         auto q = p.get_negative();
+        
+        //p.dump();
         
         std::string pd = "atan(..)";
         std::string qd = "atan(..)";
@@ -118,12 +126,26 @@ void step_one()
     }
     
     {
-        // new test: (sin((i / N) * 2pi) / delta + 0.5)
-        auto p = julia_prob_function("0.5 + (sin((i / N) * 2pi) * " + delta + ")", N);
+        // new test: (sin((i / N) * 2pi) * 2delta) + 0.5
+        auto p = julia_prob_function("0.5 + (sin((i / N) * 2pi)/2 * " + delta + ")", N);
         auto q = p.get_negative();
-        
+    
+        //p.dump();
+    
         std::string pd = "sin(..)";
         std::string qd = "sin(..)";
+        step_two(p, pd, q, qd, N);
+    }
+    
+    {
+        // new test: 0.5 - (asin(2x/N - 1) / pi) * delta
+        auto p = julia_prob_function("0.5 - ((asin(2i/N - 1) / pi) * " + delta + ")", N);
+        auto q = p.get_negative();
+    
+        //p.dump();
+    
+        std::string pd = "asin(..)";
+        std::string qd = "asin(..)";
         step_two(p, pd, q, qd, N);
     }
 }
