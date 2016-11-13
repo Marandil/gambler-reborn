@@ -9,7 +9,7 @@
 
 precomputed_prob_function julia_prob_function(std::string fun, uint64_t N)
 {
-    std::string command = "julia -e \"f(i,N) = (" + fun + "); for i in 0:" + std::to_string(N) + " println(f(i," + std::to_string(N) + ")); end\"";
+    std::string command = "julia -e \"f(i,N) = (" + fun + "); for i in 0:" + std::to_string(N) + " println(Rational(f(i," + std::to_string(N) + "))); end\"";
     std::string numbers = system_output(command);
     
     std::istringstream iss(numbers);
@@ -26,7 +26,7 @@ precomputed_prob_function julia_prob_function(std::string fun, uint64_t N)
         //rational rat(flo);
         //std::cout << rat << "\n";
         
-        rational rat = parse_floating_rational(row);
+        rational rat = parse_rational(row);
         
         tmp[i] = rat;
     }

@@ -10,6 +10,7 @@
 #include "bit_tracker.hpp"
 #include "precomputed_prob_function.hpp"
 
+#include "poly_prob.hpp"
 #include "los_rng.hpp"
 
 #include "mdlutils/multithreading/thread_pool.hpp"
@@ -19,10 +20,14 @@
 int concurrency = 4; // hint: std::thread::hardware_concurrency()
 
 std::deque<std::future<bool>> all_tasks;
-//mdl::thread_pool pool(concurrency, mdl::thread_pool::strategy::dynamic);
-mdl::thread_pool pool(concurrency, mdl::thread_pool::strategy::power2choices);
+mdl::thread_pool pool(concurrency, mdl::thread_pool::strategy::dynamic);
+//mdl::thread_pool pool(concurrency, mdl::thread_pool::strategy::power2choices);
 
 std::string ADD_BASE = "GAMBLER_0001";
+
+void
+compute_expected_for_all(prob_function function, std::string basic_string, prob_function q, std::string basicString,
+                         int N);
 
 integer kdf(int N, int i, uint64_t idx, uint64_t runs)
 {
@@ -94,9 +99,18 @@ void step_three(prob_function p, std::string pd, prob_function q, std::string qd
 // second entry point, tweak starting points (i)
 void step_two(prob_function p, std::string pd, prob_function q, std::string qd, int N)
 {
-    int i = N / 2;
+    int i;
     
+    i = 1;
     step_three(p, pd, q, qd, N, i);
+    
+    i = N / 2;
+    step_three(p, pd, q, qd, N, i);
+    
+    i = N-1;
+    step_three(p, pd, q, qd, N, i);
+    
+    //compute_expected_for_all(p, pd, q, qd, N);
 }
 
 // first entry point, tweak tested p/q pairs here and max. number of states (N)
@@ -105,7 +119,8 @@ void step_one()
     int N = 128;
     
     // delta - deviation from 0.5 for the upcoming tests:
-    std::string delta = "(1//16)";
+    std::string delta = "(1//24)";
+    rational delta_q = 1_mpq / 24_mpq;
     
     // plots for WolframAlpha: plot {
     //                                  0.5 + (sin((x / 128) * 2pi)/2 * 1/16),
@@ -114,38 +129,62 @@ void step_one()
     //                              }  for x in [0, 128]
     
     {
-        // new test: (atan(N/2 - i) / pi * delta) + 0.5 (values range between 31/64 and 33/64)
-        auto p = julia_prob_function("0.5 + (atan(N / 2 - i) / pi) * " + delta, N);
+        // new test: (atan(N/2 - i) / pi * delta) + 0.5
+        auto p = julia_prob_function("0.5 + (atan(N / 2 - i) / pi) * 2" + delta, N);
         auto q = p.get_negative();
         
         //p.dump();
         
-        std::string pd = "atan(..)";
-        std::string qd = "atan(..)";
+        std::string pd = "atan(" + delta + ")";
+        std::string qd = "atan(" + delta + ")";
         step_two(p, pd, q, qd, N);
     }
     
     {
         // new test: (sin((i / N) * 2pi) * 2delta) + 0.5
-        auto p = julia_prob_function("0.5 + (sin((i / N) * 2pi)/2 * " + delta + ")", N);
+        auto p = julia_prob_function("0.5 + (sin((i / N) * 2pi) * " + delta + ")", N);
         auto q = p.get_negative();
     
         //p.dump();
     
-        std::string pd = "sin(..)";
-        std::string qd = "sin(..)";
+        std::string pd = "sin(" + delta + ")";
+        std::string qd = "sin(" + delta + ")";
         step_two(p, pd, q, qd, N);
     }
     
     {
         // new test: 0.5 - (asin(2x/N - 1) / pi) * delta
-        auto p = julia_prob_function("0.5 - ((asin(2i/N - 1) / pi) * " + delta + ")", N);
+        auto p = julia_prob_function("0.5 - ((asin(2i/N - 1) / pi) * 2" + delta + ")", N);
         auto q = p.get_negative();
-    
+        
         //p.dump();
+        
+        std::string pd = "asin(" + delta + ")";
+        std::string qd = "asin(" + delta + ")";
+        step_two(p, pd, q, qd, N);
+    }
     
-        std::string pd = "asin(..)";
-        std::string qd = "asin(..)";
+    {
+        // new test: 0.5 + 64 * delta * x * (-N + x) * (-N/2 + x)/(3*N**3)
+        auto p = poly_prob::sinus_like3(N, delta_q);
+        auto q = p.get_negative();
+        
+        //p.dump();
+        
+        std::string pd = "poly3-sin(" + delta + ")";
+        std::string qd = "poly3-sin(" + delta + ")";
+        step_two(p, pd, q, qd, N);
+    }
+    
+    {
+        // new test: 0.5 + x^5... - x^3... + x^1...
+        auto p = poly_prob::sinus_like5(N, delta_q);
+        auto q = p.get_negative();
+        
+        //p.dump();
+        
+        std::string pd = "poly5-sin(" + delta + ")";
+        std::string qd = "poly5-sin(" + delta + ")";
         step_two(p, pd, q, qd, N);
     }
 }

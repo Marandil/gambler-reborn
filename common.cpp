@@ -8,6 +8,7 @@
 #include <streambuf>
 #include <gmpxx.h>
 #include <stdlib.h>
+#include <iostream>
 #include "common.hpp"
 
 std::string system_output(std::string cmd)
@@ -28,10 +29,24 @@ std::string system_output(std::string cmd)
     return buffer;
 }
 
+rational parse_rational(std::string rat)
+{
+    size_t pt = rat.find("//");
+    std::string snom = rat.substr(0, pt);
+    std::string sden = rat.substr(pt+2);
+    
+    //std::cerr << snom << " // " << sden << "\n";
+    
+    integer nom(snom);
+    integer den(sden);
+    
+    return rational(nom, den);
+}
+
 rational parse_floating_rational(std::string flt)
 {
     size_t pt = flt.find('.');
-    std::string dec = flt.substr(0, pt-1);
+    std::string dec = flt.substr(0, pt);
     std::string frac = flt.substr(pt+1);
     
     size_t div_power = frac.length();

@@ -13,14 +13,40 @@ class precomputed_prob_function
 protected:
     std::vector<rational> buffer;
     
+    void print_stats() const
+    {
+        const size_t N = buffer.size();
+        rational min = 1, max = 0, sum = 0;
+    
+        for(int i = 1; i < N; ++i)
+        {
+            if(buffer[i] < min)
+                min = buffer[i];
+            if(buffer[i] > max)
+                max = buffer[i];
+            sum += buffer[i];
+        }
+        
+        double d_min = min.get_d();
+        double d_max = max.get_d();
+        double d_sum = sum.get_d();
+    
+        //std::cout << " Precomputed prob function; min : " << d_min << ", max : " << d_max << ", avg : " << (d_sum / (N-1)) << "\n";
+    }
+    
 public:
     precomputed_prob_function(prob_function base, int N) : buffer(N, 0_mpq)
     {
         for(int i = 0; i < N; ++i)
             buffer[i] = base(i, N);
+    
+        print_stats();
     }
     
-    precomputed_prob_function(const std::vector<rational>& pattern) : buffer(pattern) { }
+    precomputed_prob_function(const std::vector<rational>& pattern) : buffer(pattern)
+    {
+        print_stats();
+    }
     
     rational operator ()(uint64_t i, uint64_t N) const { return buffer[i]; }
     
