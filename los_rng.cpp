@@ -382,30 +382,4 @@ namespace los_rng
             fwrite(&chunk, sizeof(uint64_t), 1, stdout);
         }
     }
-
-    /*
-    int main(int argc, char** argv)
-    {
-        if (argc < 4)
-        {
-            printf("Usage: %s [prng name] [length] [seed]\n", argv[0]);
-            exit(0);
-        }
-        
-        std::shared_ptr<PRNG> prng = getPRNG(argv[1]);
-        if (!prng)
-        {
-            printf("Unknown prng: %s\n", argv[1]);
-            exit(0);
-        }
-        
-        char *pEnd;
-        uint64_t length = strtoull(argv[2], &pEnd, 10);
-        uint64_t seed = strtoull(argv[3], &pEnd, 10);
-        
-        prng->setSeed(seed);
-        generateString(length * 8, prng);
-    }
-    */
-    
 }

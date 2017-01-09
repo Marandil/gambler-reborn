@@ -10,14 +10,14 @@
 
 namespace bit_tracker
 {
-	integer rand_range(integer range_bot, integer range_top, bit_function get_bit);
+	integer rand_range(integer range_bot, integer range_top, bit_function& get_bit);
 	
 	class BitTracker
     {
     protected:
-        bit_function bit_source;
+        bit_function_p bit_source;
     public:
-        BitTracker(bit_function get_bit) : bit_source(get_bit) { }
+        BitTracker(bit_function_p get_bit) : bit_source(get_bit) { }
         int operator ()(const std::vector<rational>& points);
     };
 }

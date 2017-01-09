@@ -7,7 +7,7 @@
 
 namespace bit_tracker
 {
-    integer rand_range(integer range_bot, integer range_top, bit_function get_bit)
+    integer rand_range(integer range_bot, integer range_top, bit_function& get_bit)
     {
         integer k = range_top - range_bot;
         
@@ -78,6 +78,7 @@ namespace bit_tracker
     
     int BitTracker::operator()(const std::vector<rational>& points)
     {
+        bit_function& bs = *this->bit_source;
         static int i = 0;
         rational l = 0, r = 1;
         //if(i >= 0 && i <= 8) std::cout << "\nF: " << points[0] << " | " << points[1] << "\n";
@@ -85,7 +86,7 @@ namespace bit_tracker
         int range_l = 0, range_r = check_in_range_rev(points, r);;
         while(range_l != range_r)
         {
-            bool bit = this->bit_source();
+            bool bit = bs();
             if (bit)            // on 1 go right
             {
                 l = (r + l) / 2;

@@ -3,6 +3,7 @@
 
 
 #include "common.hpp"
+#include "functions.hpp"
 
 #include <functional>
 #include <iostream>
@@ -15,22 +16,22 @@ namespace gambler
         
         uint64_t value;
         uint64_t limit;
-        
-        prob_function p, q; // step win/loss probability function
+    
+        precomputed_prob_function *p, *q; // step win/loss probability function
         
         uint64_t step_win;
         uint64_t step_none;
         uint64_t step_loss;
     
     public:
-        Gambler1D(uint64_t start, uint64_t limit, prob_function p, prob_function q, uint64_t stepWin = 1,
+        Gambler1D(uint64_t start, uint64_t limit, precomputed_prob_function *p, precomputed_prob_function *q, uint64_t stepWin = 1,
                   uint64_t stepLoss = -1, uint64_t stepNone = 0)
                 : value(start), limit(limit), time(0), p(p), q(q), step_win(stepWin), step_none(stepNone), step_loss(stepLoss) {}
         
         bool step_regular(sim_function& random)
         {
-            rational _p = p(value, limit);
-            rational _q = q(value, limit);
+            rational _p = (*p)(value, limit);
+            rational _q = (*q)(value, limit);
             
             int outcome = random({_p, _p + _q});
             switch (outcome)
@@ -53,7 +54,7 @@ namespace gambler
         bool is_lost() const { return value == 0; }
         bool is_finished() const { return is_won() || is_lost(); }
         
-        std::pair<bool, uint64_t> run_gambler(sim_function& random)
+        std::pair<bool, uint64_t> run_gambler(sim_function random)
         {
             //std::cout << "TIME S : " << time << "\n";
             while(!is_finished())

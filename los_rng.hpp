@@ -23,7 +23,7 @@ namespace los_rng
     std::shared_ptr<PRNG> getPRNG(const char *name);
     void generateString(uint64_t nrOfBits, std::shared_ptr<PRNG> prng);
     
-    class BitSource
+    class BitSource : public bit_function
     {
         std::shared_ptr<PRNG> rng;
         size_t curr;
@@ -32,7 +32,7 @@ namespace los_rng
     public:
         BitSource(std::shared_ptr<PRNG> rng) : rng(rng), bits(rng->getNrOfBits()), curr(0), word(0) { }
         
-        bool operator()()
+        bool operator()() override
         {
             if(!curr)
             {
@@ -47,13 +47,13 @@ namespace los_rng
         }
     };
     
-    inline std::function<bit_function(integer)> get_gen(const char* name)
+    inline std::function<bit_function_p(integer)> get_gen(const char* name)
     {
         return [=](integer seed)
             {
                 auto rng = los_rng::getPRNG(name);
                 rng->setSeed(seed);
-                return los_rng::BitSource(rng);
+                return std::make_shared<los_rng::BitSource>(rng);
             };
     }
 }
