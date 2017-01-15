@@ -16,9 +16,10 @@
 constexpr size_t MAX_BLOCK_SIZE = 1024;
 const uint8_t zero_buffer[MAX_BLOCK_SIZE] = {}; // in C++ this shall initialize the whole array with zeroes
 
-std::pair<size_t, uint8_t*> decode(integer value)
+std::pair<size_t, uint8_t*> decode(integer value, size_t size=0)
 {
-    size_t size = (mpz_sizeinbase (value.get_mpz_t(), 2) + CHAR_BIT-1) / CHAR_BIT;
+    if(!size)
+        size = (mpz_sizeinbase (value.get_mpz_t(), 2) + CHAR_BIT-1) / CHAR_BIT;
     uint8_t *buffer = new uint8_t[size];
     mpz_export(buffer, nullptr, -1, size, 0, 0, value.get_mpz_t());
     return std::make_pair(size, buffer);
@@ -34,7 +35,7 @@ struct rc4_rng : public openssl_rng
     
     rc4_rng(integer key) : openssl_rng(CIPHER_BLOCK_SIZE)
     {
-        auto sb = decode(key);
+        auto sb = decode(key, 32);
         RC4_set_key(&rc4_key, int(sb.first), sb.second);
         delete[] sb.second;
     }
@@ -52,7 +53,7 @@ struct evp_rng : public openssl_rng
     evp_rng(integer key, const EVP_CIPHER *type, size_t CIPHER_BLOCK_SIZE) : openssl_rng(CIPHER_BLOCK_SIZE)
     {
         ctx = EVP_CIPHER_CTX_new();
-        auto sb = decode(key);
+        auto sb = decode(key, 32);
         EVP_EncryptInit_ex(ctx, type, NULL, NULL, NULL);
         OPENSSL_assert(EVP_CIPHER_CTX_key_length(ctx) <= sb.first);
         EVP_EncryptInit_ex(ctx, type, NULL, sb.second, zero_buffer);
@@ -92,7 +93,7 @@ struct ctr_evp_rng : public openssl_rng
     virtual void next()
     {
         int tmp;
-        auto sb = decode(counter);
+        auto sb = decode(counter, 32);
         EVP_EncryptUpdate(ctx, this->block, &tmp, sb.second, int(std::min(this->block_size, sb.first)));
         ++counter;
         delete[] sb.second;

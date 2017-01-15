@@ -57,3 +57,31 @@ rational parse_floating_rational(std::string flt)
     
     return rational(nom, den);
 }
+
+rational trim_precision(rational r, ptrdiff_t size)
+{
+    ptrdiff_t num_bits = mpz_sizeinbase (r.get_num_mpz_t(), 2);
+    ptrdiff_t den_bits = mpz_sizeinbase (r.get_den_mpz_t(), 2);
+    ptrdiff_t diff = den_bits - num_bits;
+    
+    // std::cout << "[D " << diff << "]\t";
+    
+    // if after trimming, denominator would be size larger than num, return 0
+    if(diff > size)
+        return 0_mpq;
+    
+    // count the number of bits we need to trim for den:
+    ptrdiff_t trim = den_bits - size;
+    
+    // std::cout << "[T " << trim << "]\t";
+    // if the trim is < 0, return r, no trimming
+    if(trim < 0)
+        return r;
+    
+    // extract num and den and shift them right by trim:
+    integer num = r.get_num() >> trim;
+    integer den = r.get_den() >> trim;
+    
+    // return a new, trimmed rational
+    return rational(num, den);
+}

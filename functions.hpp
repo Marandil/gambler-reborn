@@ -26,7 +26,7 @@ struct ppf
     std::string pd;
     std::string qd;
     
-    //ppf() = default;
+    // ppf() = default;
     // ppf() : p(nullptr), q(nullptr), pd(""), qd("") {}
     // ppf(const ppf& other) : p(other.p), q(other.q), pd(other.pd), qd(other.qd) { }
     

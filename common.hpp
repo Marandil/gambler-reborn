@@ -26,6 +26,7 @@ std::string system_output(std::string cmd);
 
 rational parse_rational(std::string rat);
 rational parse_floating_rational(std::string flt);
+rational trim_precision(rational, ptrdiff_t size);
 
 extern std::string KDF_PREFIX;
 

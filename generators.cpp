@@ -16,7 +16,9 @@
 
 integer kdf(int N, int i, uint64_t idx, uint64_t runs)
 {
-    std::string input = KDF_PREFIX + "#" + std::to_string(idx + (i * runs) + 1); // +1 to match Julia indices
+    std::stringstream ss;
+    ss << KDF_PREFIX << "#" << N << "#" << i << "#" << idx << "#" << runs;
+    std::string input = ss.str();
     unsigned char buffer[32];
     SHA256(reinterpret_cast<const unsigned char*>(input.data()), input.size(), buffer);
     std::string key = mdl::hexify(buffer, 32);
