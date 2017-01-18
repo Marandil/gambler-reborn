@@ -10,7 +10,7 @@
 
 namespace bit_tracker
 {
-	integer rand_range(integer range_bot, integer range_top, bit_function& get_bit);
+	integer rand_range(integer range_bot, integer range_top, bit_function_p get_bit);
 	
 	class BitTracker
     {

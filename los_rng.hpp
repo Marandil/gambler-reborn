@@ -32,7 +32,7 @@ namespace los_rng
     public:
         BitSource(std::shared_ptr<PRNG> rng) : rng(rng), bits(rng->getNrOfBits()), curr(0), word(0) { }
         
-        bool operator()() override
+        virtual bool next_bit() override
         {
             if(!curr)
             {

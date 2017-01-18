@@ -7,7 +7,7 @@
 #include <sstream>
 #include <iostream>
 
-precomputed_prob_function julia_prob_function(std::string fun, uint64_t N)
+precomputed_prob_function_p julia_prob_function(std::string fun, uint64_t N)
 {
     std::string command = "julia -e \"f(i,N) = (" + fun + "); for i in 0:" + std::to_string(N) + " println(Rational(f(i," + std::to_string(N) + "))); end\"";
     std::string numbers = system_output(command);
@@ -31,13 +31,13 @@ precomputed_prob_function julia_prob_function(std::string fun, uint64_t N)
         tmp[i] = rat;
     }
     
-    return precomputed_prob_function(tmp);
+    return std::make_shared<precomputed_prob_function>(tmp);
 }
 
-precomputed_prob_function precomputed_prob_function::get_negative() const
+precomputed_prob_function_p precomputed_prob_function::get_negative() const
 {
     std::vector<rational> tmp(this->buffer);
     for(auto& value : tmp)
         value = 1 - value;
-    return precomputed_prob_function(tmp);
+    return std::make_shared<precomputed_prob_function>(tmp);
 }

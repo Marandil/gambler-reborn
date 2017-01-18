@@ -23,8 +23,7 @@ public:
     static bit_function_p from_string(std::string name, integer key);
     
     virtual void next() = 0;
-    bool next_bit();
-    bool operator()() override { return next_bit(); }
+    virtual bool next_bit() override;
 };
 
 #endif //GAMBLER_REBORN_OPENSSL_RNG_HPP

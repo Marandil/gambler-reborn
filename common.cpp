@@ -85,3 +85,11 @@ rational trim_precision(rational r, ptrdiff_t size)
     // return a new, trimmed rational
     return rational(num, den);
 }
+
+rational rsqrt(rational op)
+{
+    // Convert to multiprecision floating point
+    mpf_class op_f(op);
+    mpf_class root = sqrt(op_f);
+    return rational(root);
+}

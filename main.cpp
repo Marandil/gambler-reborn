@@ -31,7 +31,7 @@ mdl::thread_pool pool(concurrency, mdl::thread_pool::strategy::dynamic);
 template <typename StartsGen>
 void runner(unsigned N, size_t runs, StartsGen is, functions fun, std::string generator)
 {
-    auto single_runner = [=](size_t idx, unsigned i)
+    auto single_runner = [N, runs, fun, generator](size_t idx, unsigned i)
         {
             auto gen = select_generator(generator, N, i, idx, runs);
             auto ppf = select_function(N, fun);
@@ -40,7 +40,7 @@ void runner(unsigned N, size_t runs, StartsGen is, functions fun, std::string ge
             auto pair = G.run_gambler(*gen.second);
 
             printf("%s;%s;%d;%d;%s;%s;%s;%zd;\n", "BitTracker", gen.first.c_str(), i, N, ppf.pd.c_str(), ppf.qd.c_str(), pair.first ? "true" : "false", pair.second);
-        
+            
             return true;
         };
     
@@ -112,6 +112,7 @@ void setup_and_run_regular()
 
 void setup_and_run_tests()
 {
+    // no. of states
     int N = 129;
     // select a single function, to initialize the function cache.
     select_function(N, functions::SIN);
@@ -121,17 +122,18 @@ void setup_and_run_tests()
     rational z_sq = z * z;
     
     std::vector<std::string> gens = {
-            "RC4",
-            "AES128CBC", "AES192CBC", "AES256CBC",
-            "AES128CTR", "AES192CTR", "AES256CTR",
-            "RANDU", "Mersenne", "MersenneAR", "VS", "C_PRG", "Rand", "Minstd", "Borland", "CMRG"
+    //        "RC4",
+    //        "AES128CBC", "AES192CBC", "AES256CBC",
+    //        "AES128CTR", "AES192CTR", "AES256CTR",
+    //        "RANDU", "Mersenne", "MersenneAR", "VS", "C_PRG", "Rand", "Minstd", "Borland", "CMRG"
+            "AES256CTR", "RANDU"
     };
     
     std::vector<functions> funs = {
             functions::T1,
-    //        functions::T2,
-    //        functions::T3,
-    //        functions::T4,
+            functions::T2,
+            functions::T3,
+            functions::T4,
     };
     
     for(functions fn : funs)
@@ -155,8 +157,8 @@ void setup_and_run_tests()
                 rational W = trim_precision(stat[i].time_variance, 64);
     
                 // get b1 and b2 of roughly 1/10000 of their corresponding expected values
-                rational b1 = P / 100_mpq;
-                rational b2 = T / 100_mpq;
+                rational b1 = P / 100_mpq; b1 = b1 ? b1 : 1_mpq/100000_mpq; // set b1, b2 to anything if P or T
+                rational b2 = T / 100_mpq; b2 = b2 ? b2 : 1_mpq/100000_mpq; // is equal to 0
                 rational b1_inv = 1_mpq/b1;
                 rational b2_inv = 1_mpq/b2;
                 rational z_sq_b1_inv_sq = b1_inv * b1_inv * z_sq;
@@ -177,13 +179,13 @@ void setup_and_run_tests()
                 {
                     std::cerr << "Too many runs required for i: " << i << ",\tb_1: " << b1.get_d() << ", clipping...\n";
                     runs1 = 1<<20;
-                    b1 = rational(sqrt(V.get_num())) / rational(sqrt(V.get_den() * runs1)) * z;
+                    b1 = rsqrt(V / runs1) * z;
                 }
                 if(runs2 > 1<<20)
                 {
                     std::cerr << "Too many runs required for i: " << i << ",\tb_2: " << b2.get_d() << ", clipping...\n";
                     runs2 = 1<<20;
-                    b2 = rational(sqrt(V.get_num())) / rational(sqrt(V.get_den() * runs2)) * z;
+                    b2 = rsqrt(V / runs2) * z;
                 }
                 // print runs1 and runs2:
                 std::cerr << "for i: " << i << ",\tb_1: " << b1.get_d() << ",\tb_2: " << b2.get_d();
@@ -205,7 +207,7 @@ int main(int argc, const char *argv[])
     _env = std::getenv("KDF_PREFIX");
     if(_env)
         KDF_PREFIX = _env;
-    // read in the gambler-prefix for KDF:
+    // read in the dump functions filename:
     _env = std::getenv("DUMP_FUNCTIONS");
     if(_env)
         DUMP_FUNCTIONS = _env;

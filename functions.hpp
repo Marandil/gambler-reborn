@@ -21,43 +21,25 @@ enum class functions
 
 struct ppf
 {
-    precomputed_prob_function *p;
-    precomputed_prob_function *q;
+    precomputed_prob_function_p p;
+    precomputed_prob_function_p q;
     std::string pd;
     std::string qd;
     
-    // ppf() = default;
-    // ppf() : p(nullptr), q(nullptr), pd(""), qd("") {}
-    // ppf(const ppf& other) : p(other.p), q(other.q), pd(other.pd), qd(other.qd) { }
-    
-    // ppf(precomputed_prob_function *p, precomputed_prob_function *q, std::string pd, std::string qd) : p(p), q(q), pd(pd), qd(qd) { };
-    
-    /*
-    ppf& init(precomputed_prob_function *p, precomputed_prob_function *q, std::string pd, std::string qd)
+    static ppf anew(precomputed_prob_function_p p, std::string pd)
     {
-        this->p = p;
-        this->q = q;
-        this->pd = pd;
-        this->qd = qd;
-        return *this;
-    }
-    */
-    
-    static ppf alloc(precomputed_prob_function p, std::string pd)
-    {
-        return ppf{new precomputed_prob_function(p), new precomputed_prob_function(p.get_negative()), pd, "1-" + pd};
+        return ppf{p, p->get_negative(), pd, "1-" + pd};
     }
     
-    static ppf alloc(precomputed_prob_function p, precomputed_prob_function q, std::string pd, std::string qd)
+    static ppf anew(precomputed_prob_function_p p, precomputed_prob_function_p q, std::string pd, std::string qd)
     {
         return ppf{
-                new precomputed_prob_function(p),
-                new precomputed_prob_function(q),
-                pd, qd
+                p, q, pd, qd
         };
     }
 };
 
-const ppf& select_function(int, functions);
+
+ppf select_function(int, functions);
 
 #endif //GAMBLER_REBORN_FUNCTIONS_HPP

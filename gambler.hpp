@@ -17,16 +17,17 @@ namespace gambler
         uint64_t value;
         uint64_t limit;
     
-        precomputed_prob_function *p, *q; // step win/loss probability function
+        precomputed_prob_function_p p, q; // step win/loss probability function
         
         uint64_t step_win;
         uint64_t step_none;
         uint64_t step_loss;
     
     public:
-        Gambler1D(uint64_t start, uint64_t limit, precomputed_prob_function *p, precomputed_prob_function *q, uint64_t stepWin = 1,
-                  uint64_t stepLoss = -1, uint64_t stepNone = 0)
-                : value(start), limit(limit), time(0), p(p), q(q), step_win(stepWin), step_none(stepNone), step_loss(stepLoss) {}
+        Gambler1D(uint64_t start, uint64_t limit, precomputed_prob_function_p p, precomputed_prob_function_p q,
+                  uint64_t stepWin = 1, uint64_t stepLoss = -1, uint64_t stepNone = 0)
+                : value(start), limit(limit), time(0), p(p), q(q),
+                  step_win(stepWin), step_none(stepNone), step_loss(stepLoss) {}
         
         bool step_regular(sim_function& random)
         {

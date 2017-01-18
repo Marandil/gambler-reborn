@@ -8,6 +8,9 @@
 #include <iostream>
 #include "common.hpp"
 
+class precomputed_prob_function;
+typedef std::shared_ptr<precomputed_prob_function> precomputed_prob_function_p;
+
 class precomputed_prob_function
 {
 protected:
@@ -50,7 +53,7 @@ public:
     
     rational operator ()(uint64_t i, uint64_t N) const { return buffer[i]; }
     
-    precomputed_prob_function get_negative() const;
+    precomputed_prob_function_p get_negative() const;
     
     void dump(void) const
     {
@@ -59,6 +62,6 @@ public:
     }
 };
 
-precomputed_prob_function julia_prob_function(std::string fun, uint64_t N);
+precomputed_prob_function_p julia_prob_function(std::string fun, uint64_t N);
 
 #endif //GAMBLER_REBORN_PRECOMPUTED_PROB_FUNCTION_HPP

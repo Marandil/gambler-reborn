@@ -18,7 +18,7 @@ typedef std::function<int(const std::vector<rational>& points)> sim_function;
 
 struct bit_function {
     virtual ~bit_function() { };
-    virtual bool operator()() = 0;
+    virtual bool next_bit() = 0;
 };
 typedef std::shared_ptr<bit_function> bit_function_p;
 
@@ -27,6 +27,8 @@ std::string system_output(std::string cmd);
 rational parse_rational(std::string rat);
 rational parse_floating_rational(std::string flt);
 rational trim_precision(rational, ptrdiff_t size);
+
+rational rsqrt(rational);
 
 extern std::string KDF_PREFIX;
 
