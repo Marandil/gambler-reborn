@@ -4,7 +4,6 @@
 
 #include <iostream>
 #include "statistics.hpp"
-#include <limits>
 
 typedef std::numeric_limits< double > dbl;
 
@@ -51,8 +50,11 @@ inline rational prod(int from, int to, const std::vector<rational>& vector)
 
 
 std::vector<statistics>
-compute_expected_for_all(prob_function p, std::string pd, prob_function q, std::string qd, int N, bool print)
+compute_expected_for_all(ppf pq, int N, bool print)
 {
+    const precomputed_prob_function &p = *pq.p;
+    const precomputed_prob_function &q = *pq.q;
+    
     std::vector<rational> kappa(N, 1_mpq);
     std::vector<rational> pi(N, 1_mpq);
     std::vector<rational> dee(N, 1_mpq);
@@ -133,7 +135,8 @@ compute_expected_for_all(prob_function p, std::string pd, prob_function q, std::
         std::cerr.precision(dbl::max_digits10 + 2);
         for (int i = 1; i < N; ++i)
         {
-            std::cerr << pd << ";" << qd << ";" << i << ";" << N << ";" << prob[i].get_d() << ";" << taus[i].get_d()
+            std::cerr << pq.pd << ";" << pq.qd << ";" << i << ";" << N << ";" << prob[i].get_d() << ";"
+                      << taus[i].get_d()
                       << ";" << vars[i].get_d() << ";" << vee[i].get_d() << "\n";
         }
         std::cerr.precision(saved);

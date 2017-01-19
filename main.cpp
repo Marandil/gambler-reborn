@@ -12,7 +12,6 @@
 
 #include "gambler.hpp"
 
-#include "functions.hpp"
 #include "generators.hpp"
 #include "statistics.hpp"
 
@@ -60,7 +59,7 @@ void dump_functions(int N, functions fn)
     of << "p;q;N;i;EX;VarX;ET;VarT\n";
     
     auto ppf = select_function(N, fn);
-    std::vector<statistics> stat = compute_expected_for_all(*ppf.p, ppf.pd, *ppf.q, ppf.qd, N, true);
+    std::vector<statistics> stat = compute_expected_for_all(ppf, N, true);
     // for each starting point i
     for(int i=1; i < N; ++i)
     {
@@ -143,7 +142,7 @@ void setup_and_run_tests()
         else
         {
             auto ppf = select_function(N, fn);
-            std::vector<statistics> stat = compute_expected_for_all(*ppf.p, ppf.pd, *ppf.q, ppf.qd, N, false);
+            std::vector<statistics> stat = compute_expected_for_all(ppf, N, false);
     
             // for each starting point i
             for (int i = 1; i < N; ++i)

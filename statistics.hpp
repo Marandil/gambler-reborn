@@ -7,6 +7,7 @@
 
 
 #include "common.hpp"
+#include "functions.hpp"
 
 struct statistics
 {
@@ -17,6 +18,6 @@ struct statistics
 };
 
 std::vector<statistics>
-compute_expected_for_all(prob_function p, std::string pd, prob_function q, std::string qd, int N, bool print=false);
+compute_expected_for_all(ppf pq, int N, bool print = false);
 
 #endif //GAMBLER_REBORN_STATISTICS_HPP
