@@ -3,12 +3,10 @@
 //
 
 #include "generators.hpp"
-#include "bit_tracker.hpp"
 #include "los_rng.hpp"
 #include "openssl_rng.hpp"
 
 #include <openssl/sha.h>
-#include <openssl/rc4.h>
 
 #include <mdlutils/string_utils.hpp>
 #include <map>
@@ -25,6 +23,18 @@ integer kdf(int N, int i, uint64_t idx, uint64_t runs)
     //std::cout << "input : " << input << "\t";
     //std::cout << "KEY : " << key << "\n";
     return integer(key, 16);
+}
+
+integer kdf_related(int N, int i, uint64_t idx, uint64_t runs)
+{
+    std::stringstream ss;
+    ss << KDF_PREFIX << "#" << N << "#" << i;
+    std::string input = ss.str();
+    unsigned char buffer[32];
+    SHA256(reinterpret_cast<const unsigned char *>(input.data()), input.size(), buffer);
+    std::string key = mdl::hexify(buffer, 32);
+    
+    return integer(key, 16) + idx;
 }
 
 

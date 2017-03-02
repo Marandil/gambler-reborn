@@ -95,9 +95,9 @@ void setup_and_run_regular()
     
     std::vector<functions> funs = {
             functions::T1,
-            functions::T2,
-            functions::T3,
-            functions::T4
+//            functions::T2,
+//            functions::T3,
+//            functions::T4
     };
     
     std::vector<unsigned> is = {
@@ -121,18 +121,18 @@ void setup_and_run_tests()
     rational z_sq = z * z;
     
     std::vector<std::string> gens = {
-    //        "RC4",
+            "RC4",
     //        "AES128CBC", "AES192CBC", "AES256CBC",
     //        "AES128CTR", "AES192CTR", "AES256CTR",
     //        "RANDU", "Mersenne", "MersenneAR", "VS", "C_PRG", "Rand", "Minstd", "Borland", "CMRG"
-            "AES256CTR", "RANDU"
+            //        "AES256CTR", "RANDU"
     };
     
     std::vector<functions> funs = {
             functions::T1,
             functions::T2,
             functions::T3,
-            functions::T4,
+            //        functions::T4,
     };
     
     for(functions fn : funs)
@@ -155,9 +155,13 @@ void setup_and_run_tests()
                 rational T = trim_precision(stat[i].time_expected, 64);
                 rational W = trim_precision(stat[i].time_variance, 64);
     
-                // get b1 and b2 of roughly 1/10000 of their corresponding expected values
-                rational b1 = P / 100_mpq; b1 = b1 ? b1 : 1_mpq/100000_mpq; // set b1, b2 to anything if P or T
-                rational b2 = T / 100_mpq; b2 = b2 ? b2 : 1_mpq/100000_mpq; // is equal to 0
+                // get b1 and b2 of roughly 1/100 of their corresponding expected values
+                rational b1 = (P < 1_mpq / 2 ? P : 1 - P) / 100_mpq;
+                rational b2 = T / 100_mpq;
+    
+                b1 = b1 ? b1 : 1_mpq / 100000000000_mpq; // set b1, b2 to anything if P or T
+                b2 = b2 ? b2 : 1_mpq / 100000000000_mpq; // is equal to 0
+                
                 rational b1_inv = 1_mpq/b1;
                 rational b2_inv = 1_mpq/b2;
                 rational z_sq_b1_inv_sq = b1_inv * b1_inv * z_sq;
@@ -184,7 +188,7 @@ void setup_and_run_tests()
                 {
                     std::cerr << "Too many runs required for i: " << i << ",\tb_2: " << b2.get_d() << ", clipping...\n";
                     runs2 = 1<<20;
-                    b2 = rsqrt(V / runs2) * z;
+                    b2 = rsqrt(W / runs2) * z;
                 }
                 // print runs1 and runs2:
                 std::cerr << "for i: " << i << ",\tb_1: " << b1.get_d() << ",\tb_2: " << b2.get_d();

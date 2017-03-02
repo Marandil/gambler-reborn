@@ -32,6 +32,17 @@ rational trim_precision(rational, ptrdiff_t size);
 
 rational rsqrt(rational);
 
+inline unsigned ilog2(uint64_t v)
+{
+    unsigned r = 0;
+    while (v)
+    {
+        v >>= 1;
+        ++r;
+    }
+    return r;
+}
+
 extern std::string KDF_PREFIX;
 
 #endif // _COMMON_HPP
