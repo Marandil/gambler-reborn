@@ -22,34 +22,43 @@ std::string KDF_PREFIX = "GAMBLER_0001";
 // DUMP_FUNCTIONS environmental variable, if not empty then a dump file for the function should be created
 std::string DUMP_FUNCTIONS = "";
 
-std::deque<std::future<bool>> all_tasks;
+std::list<std::future<bool>> all_tasks;
 mdl::thread_pool pool(concurrency, mdl::thread_pool::strategy::dynamic);
 //mdl::thread_pool pool(concurrency, mdl::thread_pool::strategy::power2choices);
 
 
+bool single_runner(unsigned N, size_t runs, functions fun, std::string generator, size_t idx, unsigned i)
+{
+    auto gen = select_generator(generator, N, i, idx, runs);
+    auto ppf = select_function(N, fun);
+    
+    gambler::Gambler1D G(i, N, ppf.p, ppf.q);
+    auto pair = G.run_gambler(gen.second);
+    
+    printf("%s;%s;%d;%d;%s;%s;%s;%zd;\n", "BitTracker", gen.first.c_str(), i, N, ppf.pd.c_str(), ppf.qd.c_str(), pair.first ? "true" : "false", pair.second);
+    
+    gen.second = nullptr;
+    
+    return true;
+}
+
 template <typename StartsGen>
 void runner(unsigned N, size_t runs, StartsGen is, functions fun, std::string generator)
 {
-    auto single_runner = [N, runs, fun, generator](size_t idx, unsigned i)
-        {
-            auto gen = select_generator(generator, N, i, idx, runs);
-            auto ppf = select_function(N, fun);
-        
-            gambler::Gambler1D G(i, N, ppf.p, ppf.q);
-            auto pair = G.run_gambler(*gen.second);
-
-            printf("%s;%s;%d;%d;%s;%s;%s;%zd;\n", "BitTracker", gen.first.c_str(), i, N, ppf.pd.c_str(), ppf.qd.c_str(), pair.first ? "true" : "false", pair.second);
-            
-            return true;
-        };
-    
     for(unsigned i : is)
         for(size_t idx : mdl::range<size_t>(runs))
         {
             if (pool.get_awaiting_tasks() > 65536)
                 while (pool.get_awaiting_tasks() > 1024)
-                    std::this_thread::sleep_for(std::chrono::milliseconds(10));
-            all_tasks.emplace_back(pool.async(single_runner, idx, i));
+                {
+                    //std::this_thread::sleep_for(std::chrono::milliseconds(10));
+                    for(auto it = all_tasks.begin(); it != all_tasks.end(); ++it)
+                    {
+                        if (it->valid())
+                            it = all_tasks.erase(it);
+                    }
+                }
+            all_tasks.emplace_back(pool.async(single_runner, N, runs, fun, generator, idx, i));
         }
 }
 
@@ -121,10 +130,11 @@ void setup_and_run_tests()
     rational z_sq = z * z;
     
     std::vector<std::string> gens = {
-            "RC4",
+    //        "RC4",
     //        "AES128CBC", "AES192CBC", "AES256CBC",
     //        "AES128CTR", "AES192CTR", "AES256CTR",
     //        "RANDU", "Mersenne", "MersenneAR", "VS", "C_PRG", "Rand", "Minstd", "Borland", "CMRG"
+            "Mersenne", "MersenneAR", "VS", "C_PRG", "Rand", "Minstd", "Borland", "CMRG"
             //        "AES256CTR", "RANDU"
     };
     
@@ -176,18 +186,20 @@ void setup_and_run_tests()
                 rational n2 = W * z_sq_b2_inv_sq;
                 // round down and add 1 for a simpler math
                 size_t runs2 = size_t(n2.get_d()) + 1;
+
+                size_t max_runs = 1<<20;
                 
                 // if any of the runs1/runs2 would be greater than 2^20, print warning and clip runs
-                if(runs1 > 1<<20)
+                if(runs1 > max_runs)
                 {
                     std::cerr << "Too many runs required for i: " << i << ",\tb_1: " << b1.get_d() << ", clipping...\n";
-                    runs1 = 1<<20;
+                    runs1 = max_runs;
                     b1 = rsqrt(V / runs1) * z;
                 }
-                if(runs2 > 1<<20)
+                if(runs2 > max_runs)
                 {
                     std::cerr << "Too many runs required for i: " << i << ",\tb_2: " << b2.get_d() << ", clipping...\n";
-                    runs2 = 1<<20;
+                    runs2 = max_runs;
                     b2 = rsqrt(W / runs2) * z;
                 }
                 // print runs1 and runs2:
@@ -219,6 +231,6 @@ int main(int argc, const char *argv[])
     //setup_and_run_regular();
     setup_and_run_tests();
     
-    for(auto& f : all_tasks)
-        f.wait();
+    for(auto it = all_tasks.begin(); it != all_tasks.end(); it = all_tasks.erase(it))
+        it->wait();
 }

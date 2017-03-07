@@ -23,28 +23,24 @@ namespace los_rng
     public:
         const uint64_t M;
         const uint64_t a, b;
-        const uint32_t nrOfBits;
         
         LCG(uint64_t M_, uint64_t a_, uint64_t b_, const uint32_t nrOfBits_)
-                : M(M_), a(a_), b(b_), nrOfBits(nrOfBits_)
+                : PRNG(nrOfBits_), M(M_), a(a_), b(b_)
         {
         }
         
-        void setSeed(integer seed)
+        virtual ~LCG() {}
+    
+        virtual void set_seed(integer seed)
         {
             seed = seed % M;
             this->seed = seed.get_ui();
         }
-        
-        uint64_t nextInt()
+    
+        virtual uint64_t nextInt()
         {
             seed = (a * seed + b) % M;
-            return seed & pow2m1(nrOfBits);
-        }
-        
-        uint32_t getNrOfBits()
-        {
-            return nrOfBits;
+            return seed & pow2m1(bits);
         }
     
     private:
@@ -55,47 +51,45 @@ namespace los_rng
     {
     public:
         SomeBits(std::shared_ptr<PRNG> prng_, uint32_t mostSig_, uint32_t leastSig_)
-                : prng(prng_), mostSig(mostSig_), leastSig(leastSig_), nrOfBits(mostSig_ + 1 - leastSig_)
+                : PRNG(mostSig_ + 1 - leastSig_), prng(prng_), mostSig(mostSig_), leastSig(leastSig_)
         {
         }
-        
-        void setSeed(integer seed)
+    
+        virtual ~SomeBits() {}
+    
+        virtual void set_seed(integer seed)
         {
-            prng->setSeed(seed);
+            prng->set_seed(seed);
         }
-        
-        uint64_t nextInt()
+    
+        virtual uint64_t nextInt()
         {
             return getBits(prng->nextInt());
-        }
-        
-        uint32_t getNrOfBits()
-        {
-            return nrOfBits;
         }
     
     private:
         const std::shared_ptr<PRNG> prng;
         const uint32_t mostSig;
         const uint32_t leastSig;
-        const uint32_t nrOfBits;
-        
+    
         uint64_t getBits(uint64_t n)
         {
             n = n >> leastSig;
-            return n & pow2m1(nrOfBits);
+            return n & pow2m1(bits);
         }
     };
     
     class CMRG : public PRNG
     {
     public:
-        CMRG()
+        CMRG() : PRNG(31)
         {
             reset();
         }
-        
-        void setSeed(integer seed)
+    
+        virtual ~CMRG() {}
+    
+        virtual void set_seed(integer seed)
         {
             x[0] = 0;
             x[1] = seed.get_ui();
@@ -105,8 +99,8 @@ namespace los_rng
             y[2] = seed.get_ui();
             n = 0;
         }
-        
-        uint64_t nextInt()
+    
+        virtual uint64_t nextInt()
         {
             int64_t nextx = xa * x[(n + 1) % 3] - xb * x[n];
             int64_t nexty = ya * y[(n + 2) % 3] - yb * y[n];
@@ -116,11 +110,6 @@ namespace los_rng
             y[n] = nexty;
             n = (n + 1) % 3;
             return static_cast<uint64_t>((zm + nextx - nexty) % zm );
-        }
-        
-        uint32_t getNrOfBits()
-        {
-            return 31;
         }
     
     private:
@@ -136,7 +125,7 @@ namespace los_rng
         
         void reset()
         {
-            setSeed(1);
+            set_seed(1);
         }
         
         int64_t mymod(int64_t a, int64_t m)
@@ -155,39 +144,38 @@ namespace los_rng
     class C_PRG : public PRNG
     {
     public:
-        void setSeed(integer seed)
+        C_PRG() : PRNG(31) { }
+    
+        virtual ~C_PRG() {}
+    
+        virtual void set_seed(integer seed)
         {
             srand(seed.get_ui());
         }
-        
-        uint64_t nextInt()
+    
+        virtual uint64_t nextInt()
         {
             return static_cast<uint64_t>(rand());
-        }
-        
-        uint32_t getNrOfBits()
-        {
-            return 31;
         }
     };
     
     class BorlandPRNG : public PRNG
     {
-        uint64_t nextInt()
+    public:
+        BorlandPRNG() : PRNG(15) { }
+    
+        virtual ~BorlandPRNG() {}
+        
+        virtual uint64_t nextInt()
         {
             myseed = myseed * 0x015A4E35 + 1;
             return static_cast<uint64_t>((myseed >> 16) & 0x7FFF );
         }
-        
-        void setSeed(integer seed)
+    
+        virtual void set_seed(integer seed)
         {
             myseed = seed.get_ui();
             //myrand();
-        }
-        
-        uint32_t getNrOfBits()
-        {
-            return 15;
         }
     
     private:
@@ -196,21 +184,21 @@ namespace los_rng
     
     class VisualPRNG : public PRNG
     {
-        uint64_t nextInt()
+    public:
+        VisualPRNG() : PRNG(15) { }
+    
+        virtual ~VisualPRNG() {}
+    
+        virtual uint64_t nextInt()
         {
             myseed = myseed * 0x343FDu + 0x269EC3u;
             return static_cast<uint64_t>((myseed >> 16) & 0x7FFF );
         }
-        
-        void setSeed(integer seed)
+    
+        virtual void set_seed(integer seed)
         {
             myseed = seed.get_ui();
             //myrand();
-        }
-        
-        uint32_t getNrOfBits()
-        {
-            return 15;
         }
     
     private:
@@ -220,22 +208,21 @@ namespace los_rng
     class Mersenne : public PRNG
     {
     public:
-        void setSeed(integer seed)
+        Mersenne() : PRNG(64) { }
+    
+        virtual ~Mersenne() {}
+    
+        virtual void set_seed(integer seed)
         {
             eng.seed(seed.get_ui());
         }
-        
-        uint64_t nextInt()
+    
+        virtual uint64_t nextInt()
         {
 //         //uint64_t r = static_cast<uint64_t>(eng());
             //fprintf(stderr, "%llu\n", r & pow2m1[63]);
             //return r & pow2m1[63];
             return static_cast<uint64_t>(eng());
-        }
-        
-        uint32_t getNrOfBits()
-        {
-            return 64;
         }
         
         std::mt19937_64 eng;
@@ -244,19 +231,18 @@ namespace los_rng
     class MersenneAR : public PRNG
     {
     public:
-        void setSeed(integer seed)
+        MersenneAR() : PRNG(32) { }
+    
+        virtual ~MersenneAR() {}
+    
+        virtual void set_seed(integer seed)
         {
             eng.srand(seed.get_ui());
         }
     
-        uint64_t nextInt()
+        virtual uint64_t nextInt()
         {
             return static_cast<uint64_t>(eng.genrand_int32());
-        }
-    
-        uint32_t getNrOfBits()
-        {
-            return 32;
         }
     
         mt19937ar eng{0};
@@ -355,7 +341,7 @@ namespace los_rng
     uint64_t nextChunk(std::shared_ptr<PRNG> prng)
     {
         uint64_t r = 0;
-        int nrOfBits = prng->getNrOfBits();
+        int nrOfBits = prng->bits;
         while (filled < 64)
         {
             r = prng->nextInt();

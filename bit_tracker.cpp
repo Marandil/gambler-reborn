@@ -49,6 +49,11 @@ namespace bit_tracker
         
         return l_int + range_bot;
     }
+
+    // tie-breaker for the near-impossible case:
+    // the necessity of using tie-breaker indicates a very poorly written RNG, or a very bad case,
+    // the case is reported in STDERR and te left-range range is selected
+    const rational tie_breaker = 1_mpq / (1_mpq << 128); // 1/2^128
     
     int check_in_range(const std::vector<rational>& points, const rational& value)
     {
@@ -98,6 +103,12 @@ namespace bit_tracker
             }
             //if(i >= 0 && i <= 8) std::cout << l << "(" << range_l << ") " << r << "(" << range_r << "), [" << bit << "]\n";
             //assert(++i != 20);
+            
+            if(r - l < tie_breaker)
+            {
+                std::cerr << "USED TIE-BREAKER!\n";
+                return range_l;
+            }
         }
         //std::cout << "[" << range_l << "]" << (++i % 20 == 0 ? "\n" : "");
         assert(range_l != 2);

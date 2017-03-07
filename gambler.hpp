@@ -4,6 +4,7 @@
 
 #include "common.hpp"
 #include "functions.hpp"
+#include "generators.hpp"
 
 #include <functional>
 #include <iostream>
@@ -29,12 +30,12 @@ namespace gambler
                 : value(start), limit(limit), time(0), p(p), q(q),
                   step_win(stepWin), step_none(stepNone), step_loss(stepLoss) {}
         
-        bool step_regular(sim_function& random)
+        bool step_regular(bt_p random)
         {
             rational _p = (*p)(value, limit);
             rational _q = (*q)(value, limit);
             
-            int outcome = random({_p, _p + _q});
+            int outcome = (*random)({_p, _p + _q});
             switch (outcome)
             {
                 case 0:
@@ -55,7 +56,7 @@ namespace gambler
         bool is_lost() const { return value == 0; }
         bool is_finished() const { return is_won() || is_lost(); }
         
-        std::pair<bool, uint64_t> run_gambler(sim_function random)
+        std::pair<bool, uint64_t> run_gambler(bt_p random)
         {
             //std::cout << "TIME S : " << time << "\n";
             while(!is_finished())

@@ -20,7 +20,7 @@ protected:
     openssl_rng(size_t block_size) : block(new uint8_t[block_size]), block_idx(block_size), block_size(block_size) { }
 public:
     virtual ~openssl_rng() { delete[] block; }
-    static bit_function_p from_string(std::string name, integer key);
+    static bit_function_p from_string(std::string name);
     
     virtual void next() = 0;
     virtual bool next_bit() override;

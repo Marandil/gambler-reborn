@@ -33,7 +33,11 @@ struct rc4_rng : public openssl_rng
     
     virtual ~rc4_rng() {}
     
-    rc4_rng(integer key) : openssl_rng(CIPHER_BLOCK_SIZE)
+    rc4_rng() : openssl_rng(CIPHER_BLOCK_SIZE)
+    {
+    }
+    
+    virtual void set_seed(integer key)
     {
         auto sb = decode(key, 32);
         RC4_set_key(&rc4_key, int(sb.first), sb.second);
@@ -49,20 +53,25 @@ struct rc4_rng : public openssl_rng
 struct evp_rng : public openssl_rng
 {
     EVP_CIPHER_CTX *ctx;
+    const EVP_CIPHER *type;
     
-    evp_rng(integer key, const EVP_CIPHER *type, size_t CIPHER_BLOCK_SIZE) : openssl_rng(CIPHER_BLOCK_SIZE)
+    evp_rng(const EVP_CIPHER *type, size_t CIPHER_BLOCK_SIZE) : openssl_rng(CIPHER_BLOCK_SIZE), type(type)
     {
         ctx = EVP_CIPHER_CTX_new();
-        auto sb = decode(key, 32);
         EVP_EncryptInit_ex(ctx, type, NULL, NULL, NULL);
-        OPENSSL_assert(EVP_CIPHER_CTX_key_length(ctx) <= sb.first);
-        EVP_EncryptInit_ex(ctx, type, NULL, sb.second, zero_buffer);
-        delete[] sb.second;
     }
     
     virtual ~evp_rng()
     {
         EVP_CIPHER_CTX_free(ctx);
+    }
+    
+    virtual void set_seed(integer key)
+    {
+        auto sb = decode(key, 32);
+        OPENSSL_assert(EVP_CIPHER_CTX_key_length(ctx) <= sb.first);
+        EVP_EncryptInit_ex(ctx, type, NULL, sb.second, zero_buffer);
+        delete[] sb.second;
     }
     
     virtual void next()
@@ -78,8 +87,8 @@ struct ctr_evp_rng : public openssl_rng
     EVP_CIPHER_CTX *ctx;
     integer counter;
     
-    ctr_evp_rng(integer key, const EVP_CIPHER *type, size_t CIPHER_BLOCK_SIZE) : openssl_rng(CIPHER_BLOCK_SIZE),
-                                                                                 counter(key)
+    ctr_evp_rng(const EVP_CIPHER *type, size_t CIPHER_BLOCK_SIZE) : openssl_rng(CIPHER_BLOCK_SIZE),
+                                                                                 counter(0)
     {
         ctx = EVP_CIPHER_CTX_new();
         EVP_EncryptInit_ex(ctx, type, NULL, zero_buffer, zero_buffer);
@@ -88,6 +97,11 @@ struct ctr_evp_rng : public openssl_rng
     virtual ~ctr_evp_rng()
     {
         EVP_CIPHER_CTX_free(ctx);
+    }
+    
+    virtual void set_seed(integer seed)
+    {
+        counter = seed;
     }
     
     virtual void next()
@@ -115,24 +129,24 @@ bool openssl_rng::next_bit()
     return bool((block[byte_idx] >> bit_idx) & 1);
 }
 
-bit_function_p openssl_rng::from_string(std::string name, integer key)
+bit_function_p openssl_rng::from_string(std::string name)
 {
     if(name == "RC4")
-        return std::make_shared<rc4_rng>(key);
+        return std::make_shared<rc4_rng>();
     
     if(name == "AES128CBC")
-        return std::make_shared<evp_rng>(key, EVP_aes_128_cbc(), 64);
+        return std::make_shared<evp_rng>(EVP_aes_128_cbc(), 64);
     if(name == "AES192CBC")
-        return std::make_shared<evp_rng>(key, EVP_aes_192_cbc(), 64);
+        return std::make_shared<evp_rng>(EVP_aes_192_cbc(), 64);
     if(name == "AES256CBC")
-        return std::make_shared<evp_rng>(key, EVP_aes_256_cbc(), 64);
+        return std::make_shared<evp_rng>(EVP_aes_256_cbc(), 64);
     
     if(name == "AES128CTR")
-        return std::make_shared<ctr_evp_rng>(key, EVP_aes_128_ecb(), 16);
+        return std::make_shared<ctr_evp_rng>(EVP_aes_128_ecb(), 16);
     if(name == "AES192CTR")
-        return std::make_shared<ctr_evp_rng>(key, EVP_aes_192_ecb(), 16);
+        return std::make_shared<ctr_evp_rng>(EVP_aes_192_ecb(), 16);
     if(name == "AES256CTR")
-        return std::make_shared<ctr_evp_rng>(key, EVP_aes_256_ecb(), 16);
+        return std::make_shared<ctr_evp_rng>(EVP_aes_256_ecb(), 16);
     
     mdl_throw(mdl::not_implemented_exception, "");
 }

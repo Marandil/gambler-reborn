@@ -16,11 +16,12 @@ typedef std::function<rational(uint64_t,uint64_t)> prob_function;
 typedef prob_function *prob_function_p;
 
 //typedef std::function<bool()> bit_function;
-typedef std::function<int(const std::vector<rational>& points)> sim_function;
+//typedef std::function<int(const std::vector<rational>& points)> sim_function;
 
 struct bit_function {
     virtual ~bit_function() { };
     virtual bool next_bit() = 0;
+    virtual void set_seed(integer) = 0;
 };
 typedef std::shared_ptr<bit_function> bit_function_p;
 
