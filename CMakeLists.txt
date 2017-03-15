@@ -9,6 +9,10 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 add_subdirectory(mdlutils-cpp)
 include_directories(mdlutils-cpp/include)
 
+# cryptopp
+add_subdirectory(cryptopp)
+include_directories(cryptopp)
+
 set(SOURCE_FILES
     main.cpp
     bit_tracker.cpp bit_tracker.hpp
@@ -23,5 +27,6 @@ target_link_libraries(gambler_reborn gmp gmpxx)
 target_link_libraries(gambler_reborn ${CMAKE_THREAD_LIBS_INIT})
 target_link_libraries(gambler_reborn mdlutils)
 target_link_libraries(gambler_reborn crypto)
+target_link_libraries(gambler_reborn cryptopp-static)
 
 add_executable(ppf_test ppf.cpp)

@@ -2,3 +2,6 @@
 	path = mdlutils-cpp
 	url = git@github.com:Marandil/mdlutils-cpp.git
 	branch = marandil-threading-dev
+[submodule "cryptopp"]
+	path = cryptopp
+	url = http://github.com/weidai11/cryptopp

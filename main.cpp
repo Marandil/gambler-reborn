@@ -134,8 +134,9 @@ void setup_and_run_tests()
     //        "AES128CBC", "AES192CBC", "AES256CBC",
     //        "AES128CTR", "AES192CTR", "AES256CTR",
     //        "RANDU", "Mersenne", "MersenneAR", "VS", "C_PRG", "Rand", "Minstd", "Borland", "CMRG"
-            "Mersenne", "MersenneAR", "VS", "C_PRG", "Rand", "Minstd", "Borland", "CMRG"
-            //        "AES256CTR", "RANDU"
+    //        "Mersenne", "MersenneAR", "VS", "C_PRG", "Rand", "Minstd", "Borland", "CMRG"
+    //        "AES256CTR", "RANDU"
+            "AES128CTR"
     };
     
     std::vector<functions> funs = {
@@ -155,7 +156,7 @@ void setup_and_run_tests()
             std::vector<statistics> stat = compute_expected_for_all(ppf, N, false);
     
             // for each starting point i
-            for (int i = 1; i < N; ++i)
+            for (int i = 1; i < 2; ++i)
             {
                 // compute the variance V
                 rational P = trim_precision(stat[i].win_prob, 64);
