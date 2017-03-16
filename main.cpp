@@ -155,7 +155,7 @@ void setup_and_run_tests()
             std::vector<statistics> stat = compute_expected_for_all(ppf, N, false);
     
             // for each starting point i
-            for (int i = 1; i < 2; ++i)
+            for (int i = 1; i < N; ++i)
             {
                 // compute the variance V
                 rational P = trim_precision(stat[i].win_prob, 64);
