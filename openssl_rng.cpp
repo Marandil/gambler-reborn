@@ -3,29 +3,16 @@
 //
 
 #include "openssl_rng.hpp"
-#include "common.hpp"
 
 #include <openssl/rc4.h>
 #include <openssl/evp.h>
 
-#include <memory>
 #include <mdlutils/exceptions.hpp>
 #include <iostream>
 
-// implicitly assume there will be no cipher with block size > 1024
-constexpr size_t MAX_BLOCK_SIZE = 1024;
-const uint8_t zero_buffer[MAX_BLOCK_SIZE] = {}; // in C++ this shall initialize the whole array with zeroes
+#include "cipher_common.hpp"
 
-std::pair<size_t, uint8_t*> decode(integer value, size_t size=0)
-{
-    if(!size)
-        size = (mpz_sizeinbase (value.get_mpz_t(), 2) + CHAR_BIT-1) / CHAR_BIT;
-    uint8_t *buffer = new uint8_t[size];
-    mpz_export(buffer, nullptr, -1, size, 0, 0, value.get_mpz_t());
-    return std::make_pair(size, buffer);
-}
-
-struct rc4_rng : public openssl_rng
+struct rc4_rng : public blocked_rng
 {
     static constexpr size_t CIPHER_BLOCK_SIZE = 64;
     
@@ -33,7 +20,7 @@ struct rc4_rng : public openssl_rng
     
     virtual ~rc4_rng() {}
     
-    rc4_rng() : openssl_rng(CIPHER_BLOCK_SIZE)
+    rc4_rng() : blocked_rng(CIPHER_BLOCK_SIZE)
     {
     }
     
@@ -50,12 +37,12 @@ struct rc4_rng : public openssl_rng
     }
 };
 
-struct evp_rng : public openssl_rng
+struct evp_rng : public blocked_rng
 {
     EVP_CIPHER_CTX *ctx;
     const EVP_CIPHER *type;
     
-    evp_rng(const EVP_CIPHER *type, size_t CIPHER_BLOCK_SIZE) : openssl_rng(CIPHER_BLOCK_SIZE), type(type)
+    evp_rng(const EVP_CIPHER *type, size_t CIPHER_BLOCK_SIZE) : blocked_rng(CIPHER_BLOCK_SIZE), type(type)
     {
         ctx = EVP_CIPHER_CTX_new();
         EVP_EncryptInit_ex(ctx, type, NULL, NULL, NULL);
@@ -82,13 +69,13 @@ struct evp_rng : public openssl_rng
     }
 };
 
-struct ctr_evp_rng : public openssl_rng
+struct ctr_evp_rng : public blocked_rng
 {
     EVP_CIPHER_CTX *ctx;
     integer counter;
     
-    ctr_evp_rng(const EVP_CIPHER *type, size_t CIPHER_BLOCK_SIZE) : openssl_rng(CIPHER_BLOCK_SIZE),
-                                                                                 counter(0)
+    ctr_evp_rng(const EVP_CIPHER *type, size_t CIPHER_BLOCK_SIZE) : blocked_rng(CIPHER_BLOCK_SIZE),
+                                                                    counter(0)
     {
         ctx = EVP_CIPHER_CTX_new();
         EVP_EncryptInit_ex(ctx, type, NULL, zero_buffer, zero_buffer);
@@ -114,20 +101,6 @@ struct ctr_evp_rng : public openssl_rng
         OPENSSL_assert(tmp == block_size);
     }
 };
-
-bool openssl_rng::next_bit()
-{
-    if(block_idx >= block_size)
-    {
-        this->next();
-        block_idx = 0;
-    }
-    size_t byte_idx = block_idx / 8;
-    size_t bit_idx = block_idx % 8;
-    ++block_idx;
-    //std::cout << "..." << int(block[byte_idx]) << "..." << bool((block[byte_idx] >> bit_idx) & 1) << "..." << block_idx << "\n";
-    return bool((block[byte_idx] >> bit_idx) & 1);
-}
 
 bit_function_p openssl_rng::from_string(std::string name)
 {

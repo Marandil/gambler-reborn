@@ -5,6 +5,7 @@
 #include "generators.hpp"
 #include "los_rng.hpp"
 #include "openssl_rng.hpp"
+#include "cryptopp_rng.hpp"
 
 #include <openssl/sha.h>
 
@@ -54,24 +55,29 @@ select_generator(std::string generator, int N, int i, uint64_t idx, uint64_t run
         if(it == map.end())
         {
             static std::map<std::string, std::string> los_gens = {
-                    {"RANDU", "RandU LCG"},
-                    {"Mersenne", "Mersenne Twister"},
+                    {"RANDU",      "RandU LCG"},
+                    {"Mersenne",   "Mersenne Twister"},
                     {"MersenneAR", "Mersenne AR"},
-                    {"VS", "Visual Studio"},
-                    {"C_PRG", "C Rand"},
-                    {"Rand", "Old BSD"},
-                    {"Minstd", "Minstd"},
-                    {"Borland", "Borland C"},
-                    {"CMRG", "CMRG"}
+                    {"VS",         "Visual Studio"},
+                    {"C_PRG",      "C Rand"},
+                    {"Rand",       "Old BSD"},
+                    {"Minstd",     "Minstd"},
+                    {"Borland",    "Borland C"},
+                    {"CMRG",       "CMRG"},
             };
             static std::map<std::string, std::string> openssl_gens = {
-                    {"RC4", "RC4"},
+            };
+            static std::map<std::string, std::string> cryptopp_gens = {
+                    {"RC4",       "RC4"},
+                    {"SALSA-20",  "Salsa20"},
+                    {"CHACHA-20", "ChaCha20"},
+                    {"Sosemanuk", "Sosemanuk"},
                     {"AES128CBC", "AES-128 CBC Mode"},
                     {"AES192CBC", "AES-192 CBC Mode"},
                     {"AES256CBC", "AES-256 CBC Mode"},
                     {"AES128CTR", "AES-128 CTR Mode"},
                     {"AES192CTR", "AES-192 CTR Mode"},
-                    {"AES256CTR", "AES-256 CTR Mode"}
+                    {"AES256CTR", "AES-256 CTR Mode"},
             };
             
             // Handle generation of los_gens:
@@ -82,8 +88,12 @@ select_generator(std::string generator, int N, int i, uint64_t idx, uint64_t run
             }
             else if(openssl_gens.count(generator))
             {
-                bit_function_p bf = openssl_rng::from_string(generator);
+                bf = openssl_rng::from_string(generator);
                 desc = openssl_gens[generator];
+            } else if (cryptopp_gens.count(generator))
+            {
+                bf = cryptopp_rng::from_string(generator);
+                desc = cryptopp_gens[generator];
             }
             else
                 mdl_throw(mdl::not_implemented_exception, "");

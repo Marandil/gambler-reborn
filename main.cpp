@@ -12,7 +12,6 @@
 
 #include "gambler.hpp"
 
-#include "generators.hpp"
 #include "statistics.hpp"
 
 unsigned concurrency = 4; // hint: std::thread::hardware_concurrency()
@@ -136,7 +135,7 @@ void setup_and_run_tests()
     //        "RANDU", "Mersenne", "MersenneAR", "VS", "C_PRG", "Rand", "Minstd", "Borland", "CMRG"
     //        "Mersenne", "MersenneAR", "VS", "C_PRG", "Rand", "Minstd", "Borland", "CMRG"
     //        "AES256CTR", "RANDU"
-            "AES128CTR"
+            "CHACHA-20", "SALSA-20", "Sosemanuk"
     };
     
     std::vector<functions> funs = {
