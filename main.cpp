@@ -56,6 +56,7 @@ void runner(unsigned N, size_t runs, StartsGen is, functions fun, std::string ge
                         if (it->valid())
                             it = all_tasks.erase(it);
                     }
+                    std::this_thread::sleep_for(std::chrono::milliseconds(10));
                 }
             all_tasks.emplace_back(pool.async(single_runner, N, runs, fun, generator, idx, i));
         }

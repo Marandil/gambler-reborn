@@ -9,22 +9,19 @@
 
 #include <iostream>
 
+#include <cassert>
+
 const uint8_t zero_buffer[MAX_BLOCK_SIZE] = {}; // in C++ this shall initialize the whole array with zeroes
 
 std::pair<size_t, uint8_t *> decode(integer value, size_t size)
 {
-    /*
-    if(!size)
-        size = (mpz_sizeinbase (value.get_mpz_t(), 2) + CHAR_BIT-1) / CHAR_BIT;
-    uint8_t *buffer = new uint8_t[size];
-    mpz_export(buffer, nullptr, -1, size, 0, 0, value.get_mpz_t());
-    return std::make_pair(size, buffer);
-    */
-    
     std::string hex = value.get_str(16);
     if (!size) size = (hex.size() + 1) / 2;
     
-    uint8_t *array = new uint8_t[size];
+    assert(size <= MAX_BLOCK_SIZE);
+    
+    // this array will be reused between decodes and should not be freed
+    static thread_local uint8_t array[MAX_BLOCK_SIZE];
     
     while (hex.size() < 2 * size)
         hex = "0" + hex;

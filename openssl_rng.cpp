@@ -28,7 +28,6 @@ struct rc4_rng : public blocked_rng
     {
         auto sb = decode(key, 32);
         RC4_set_key(&rc4_key, int(sb.first), sb.second);
-        delete[] sb.second;
     }
     
     virtual void next()
@@ -58,7 +57,6 @@ struct evp_rng : public blocked_rng
         auto sb = decode(key, 32);
         OPENSSL_assert(EVP_CIPHER_CTX_key_length(ctx) <= sb.first);
         EVP_EncryptInit_ex(ctx, type, NULL, sb.second, zero_buffer);
-        delete[] sb.second;
     }
     
     virtual void next()
@@ -97,7 +95,6 @@ struct ctr_evp_rng : public blocked_rng
         auto sb = decode(counter, 32);
         EVP_EncryptUpdate(ctx, this->block, &tmp, sb.second, int(std::min(this->block_size, sb.first)));
         ++counter;
-        delete[] sb.second;
         OPENSSL_assert(tmp == block_size);
     }
 };
