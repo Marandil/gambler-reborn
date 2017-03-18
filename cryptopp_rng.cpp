@@ -54,7 +54,7 @@ bit_function_p cryptopp_rng::from_string(std::string name)
         return std::make_shared<cryptopp_rng_impl<CryptoPP::ChaCha20::Encryption, 32, 32>>();
     if (name == "SALSA-20")
         return std::make_shared<cryptopp_rng_impl<CryptoPP::Salsa20::Encryption, 32, 32>>();
-    if (name == "SOSEMANUK")
+    if (name == "Sosemanuk")
         return std::make_shared<cryptopp_rng_impl<CryptoPP::Sosemanuk::Encryption, 32, 32>>();
     
     // block ciphers
