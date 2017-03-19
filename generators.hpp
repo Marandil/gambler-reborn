@@ -13,6 +13,10 @@
 typedef std::shared_ptr<bit_tracker::BitTracker> bt_p;
 
 // Use the middle parameters to create and initialize generator `generator`
-std::pair<std::string, bt_p> select_generator(std::string generator, int N, int i, uint64_t idx, uint64_t runs);
+std::pair<std::string, bit_function_p> select_generator(std::string generator);
+
+integer kdf_related(int N, int i, uint64_t idx, uint64_t runs);
+integer kdf_unrelated(int N, int i, uint64_t idx, uint64_t runs);
+
 
 #endif //GAMBLER_REBORN_GENERATORS_HPP

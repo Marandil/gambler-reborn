@@ -3,6 +3,8 @@
 
 #include <iostream>
 
+#include <mdlutils/types/range.hpp>
+
 struct ppf
 {
     void* ptr_p;
@@ -26,6 +28,13 @@ struct ppf
 
 int main()
 {
+    for(auto i : mdl::range<int>(0, 1337, 16))
+    {
+        std::cout << i << ";";
+    }
+    std::cout << "\n";
+    return 0;
+    //
     ppf test = ppf::alloc(1.7, 1.8);
     std::cout << test.ptr_p << "\n" << test.ptr_q << "\n" << test.p << "\n" << test.q << "\n";
     ppf test2;

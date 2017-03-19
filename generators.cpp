@@ -15,7 +15,7 @@
 #include <thread>
 #include <mutex>
 
-integer kdf(int N, int i, uint64_t idx, uint64_t runs)
+integer kdf_unrelated(int N, int i, uint64_t idx, uint64_t runs)
 {
     std::stringstream ss;
     ss << KDF_PREFIX << "#" << N << "#" << i << "#" << idx << "#" << runs;
@@ -43,8 +43,8 @@ integer kdf_related(int N, int i, uint64_t idx, uint64_t runs)
 std::map<std::thread::id, std::map<std::string, std::pair<std::string, bit_function_p>>> gen_cache;
 std::mutex map_lock;
 
-std::pair<std::string, bt_p>
-select_generator(std::string generator, int N, int i, uint64_t idx, uint64_t runs)
+std::pair<std::string, bit_function_p>
+select_generator(std::string generator)
 {
     bit_function_p bf;
     std::string desc;
@@ -106,7 +106,5 @@ select_generator(std::string generator, int N, int i, uint64_t idx, uint64_t run
             bf = pair.second;
         }
     }
-    integer key = kdf(N, i, idx, runs);
-    bf->set_seed(key);
-    return std::pair<std::string, bt_p>(desc, std::make_shared<bit_tracker::BitTracker>(bf));
+    return std::pair<std::string, bit_function_p>(desc, bf);
 }

@@ -2,10 +2,12 @@
 // Created by marandil on 30.09.16.
 //
 
+#include <cassert>
 #include <cstdlib>
 #include <deque>
 #include <future>
 #include <fstream>
+#include <map>
 
 #include <mdlutils/types/range.hpp>
 #include <mdlutils/multithreading/thread_pool.hpp>
@@ -25,28 +27,95 @@ std::list<std::future<bool>> all_tasks;
 mdl::thread_pool pool(concurrency, mdl::thread_pool::strategy::dynamic);
 //mdl::thread_pool pool(concurrency, mdl::thread_pool::strategy::power2choices);
 
+auto kdf = kdf_unrelated;
 
-bool single_runner(unsigned N, size_t runs, functions fun, std::string generator, size_t idx, unsigned i)
+bool binout = true;
+
+void rbin(size_t header, bool won, size_t length)
 {
-    auto gen = select_generator(generator, N, i, idx, runs);
+    struct packet {
+        size_t hdr;
+        size_t wl;
+    } _value;
+    size_t mask = won ? (1ull << (sizeof(size_t) * 8 - 1)) : 0;
+    _value.wl = (length | mask);
+    _value.hdr = header;
+    fwrite(&_value, sizeof(packet), 1, stdout);
+}
+
+std::map<std::string, size_t> header_map;
+std::mutex header_map_lock;
+
+size_t reg_header(const std::string& header)
+{
+    std::unique_lock<std::mutex> lock(header_map_lock);
+    auto it = header_map.find(header);
+    if(it == header_map.end())
+    {
+        size_t idx = header_map.size();
+        header_map[header] = idx;
+    
+        assert(header.size() < 64-8);
+        struct packet {
+            size_t idx;
+            char hdr[64-sizeof(size_t)] = {0};
+        } _value;
+    
+        _value.idx = idx;
+        strcpy(_value.hdr, header.c_str());
+        fwrite(&_value, sizeof(packet), 1, stdout);
+        
+        return idx;
+    }
+    else
+        return it->second;
+}
+
+bool single_runner(unsigned N, size_t runs, functions fun, std::string generator, size_t start, size_t end, unsigned i)
+{
     auto ppf = select_function(N, fun);
+    auto gen = select_generator(generator);
+    bit_function_p bf = gen.second;
+    bt_p bt = std::make_shared<bit_tracker::BitTracker>(bf);
     
-    gambler::Gambler1D G(i, N, ppf.p, ppf.q);
-    auto pair = G.run_gambler(gen.second);
+    std::string header;
+    {
+        std::stringstream ss("BitTracker;");
+        ss << gen.first << ";" << i << ";" << N << ";" << ppf.pd << ";" << ppf.qd << ";";
+        //if(binout)
+        //    ss << "{w};{l};";
+        header = ss.str();
+    }
+    // not neccessary if not in binout mode
+    size_t header_idx = binout ? reg_header(header) : 0;
     
-    printf("%s;%s;%d;%d;%s;%s;%s;%zd;\n", "BitTracker", gen.first.c_str(), i, N, ppf.pd.c_str(), ppf.qd.c_str(), pair.first ? "true" : "false", pair.second);
+    for(size_t idx : mdl::range<size_t>(start, end))
+    {
+        integer key = kdf(N, i, idx, runs);
+        bf->set_seed(key);
+        
+        gambler::Gambler1D G(i, N, ppf.p, ppf.q);
+        auto pair = G.run_gambler(bt);
     
-    gen.second = nullptr;
+        if(binout)
+            rbin(header_idx, pair.first, pair.second);
+        else
+            printf("%s%s;%zd;\n", header.c_str(), pair.first ? "true" : "false", pair.second);
     
+        gen.second = nullptr;
+    }
     return true;
 }
 
 template <typename StartsGen>
 void runner(unsigned N, size_t runs, StartsGen is, functions fun, std::string generator)
 {
+    constexpr size_t step_size = 1024;
     for(unsigned i : is)
-        for(size_t idx : mdl::range<size_t>(runs))
+        for(size_t start : mdl::range<size_t>(0, runs, step_size))
         {
+            size_t end = std::min(start + step_size, runs);
+            
             if (pool.get_awaiting_tasks() > 65536)
                 while (pool.get_awaiting_tasks() > 1024)
                 {
@@ -58,7 +127,7 @@ void runner(unsigned N, size_t runs, StartsGen is, functions fun, std::string ge
                     }
                     std::this_thread::sleep_for(std::chrono::milliseconds(10));
                 }
-            all_tasks.emplace_back(pool.async(single_runner, N, runs, fun, generator, idx, i));
+            all_tasks.emplace_back(pool.async(single_runner, N, runs, fun, generator, start, end, i));
         }
 }
 
@@ -136,7 +205,7 @@ void setup_and_run_tests()
     //        "RANDU", "Mersenne", "MersenneAR", "VS", "C_PRG", "Rand", "Minstd", "Borland", "CMRG"
     //        "Mersenne", "MersenneAR", "VS", "C_PRG", "Rand", "Minstd", "Borland", "CMRG"
     //        "AES256CTR", "RANDU"
-            //        "CHACHA-20", "SALSA-20",
+    //        "CHACHA-20", "SALSA-20",
             "Sosemanuk"
     };
     
@@ -229,7 +298,8 @@ int main(int argc, const char *argv[])
     if(_env)
         DUMP_FUNCTIONS = _env;
     
-    printf("sim;bs;i;N;p;q;won;len;\n");
+    if(!binout)
+        printf("sim;bs;i;N;p;q;won;len;\n");
     //setup_and_run_regular();
     setup_and_run_tests();
     
