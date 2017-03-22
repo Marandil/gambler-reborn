@@ -30,6 +30,7 @@ mdl::thread_pool pool(concurrency, mdl::thread_pool::strategy::dynamic);
 auto kdf = kdf_unrelated;
 
 bool binout = true;
+constexpr size_t header_length = 128;
 
 void rbin(size_t header, bool won, size_t length)
 {
@@ -55,10 +56,12 @@ size_t reg_header(const std::string& header)
         size_t idx = header_map.size();
         header_map[header] = idx;
     
-        assert(header.size() < 64-8);
+        constexpr max_hdr_length = header_length - sizeof(size_t);
+    
+        assert(header.size() < max_hdr_length);
         struct packet {
             size_t idx;
-            char hdr[64-sizeof(size_t)] = {0};
+            char hdr[max_hdr_length] = {0};
         } _value;
     
         _value.idx = idx;

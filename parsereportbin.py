@@ -1,6 +1,8 @@
-import sys
 import collections
 import struct
+import sys
+
+header_length = 128
 
 def main():
     file_name = "fullreport.bin"
@@ -23,7 +25,7 @@ def main():
 
             idx = struct.unpack("<Q", blob)[0]
             if idx not in headers:
-                blob = f.read(64-8)
+                blob = f.read(header_length - 8)
                 header = blob[:blob.index(b'\x00')].decode()
                 headers[idx] = header
             else:
