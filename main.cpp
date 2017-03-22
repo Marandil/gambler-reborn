@@ -56,7 +56,7 @@ size_t reg_header(const std::string& header)
         size_t idx = header_map.size();
         header_map[header] = idx;
     
-        constexpr max_hdr_length = header_length - sizeof(size_t);
+        constexpr size_t max_hdr_length = header_length - sizeof(size_t);
     
         assert(header.size() < max_hdr_length);
         struct packet {
