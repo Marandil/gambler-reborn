@@ -202,14 +202,14 @@ void setup_and_run_tests()
     rational z_sq = z * z;
     
     std::vector<std::string> gens = {
-    //        "RC4",
+            "RC4",
     //        "AES128CBC", "AES192CBC", "AES256CBC",
     //        "AES128CTR", "AES192CTR", "AES256CTR",
     //        "RANDU", "Mersenne", "MersenneAR", "VS", "C_PRG", "Rand", "Minstd", "Borland", "CMRG"
     //        "Mersenne", "MersenneAR", "VS", "C_PRG", "Rand", "Minstd", "Borland", "CMRG"
     //        "AES256CTR", "RANDU"
     //        "CHACHA-20", "SALSA-20",
-            "Sosemanuk"
+            //        "Sosemanuk"
     };
     
     std::vector<functions> funs = {
@@ -300,6 +300,9 @@ int main(int argc, const char *argv[])
     _env = std::getenv("DUMP_FUNCTIONS");
     if(_env)
         DUMP_FUNCTIONS = _env;
+    
+    std::cerr << "KDF_PREFIX:\t" << KDF_PREFIX << "\n";
+    std::cerr << "DUMP_FUNCTIONS:\t" << DUMP_FUNCTIONS << "\n";
     
     if(!binout)
         printf("sim;bs;i;N;p;q;won;len;\n");

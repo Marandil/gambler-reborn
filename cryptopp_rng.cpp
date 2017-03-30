@@ -20,7 +20,7 @@
 
 #include <iostream>
 
-template<typename Enc, size_t KeyLength, size_t BlockSize, typename... Args>
+template<typename Enc, size_t KeyLength, size_t BlockSize, bool use_iv = true, typename... Args>
 struct cryptopp_rng_impl : public blocked_rng
 {
     Enc instance;
@@ -33,10 +33,25 @@ struct cryptopp_rng_impl : public blocked_rng
     {
     }
     
-    virtual void set_seed(integer seed)
+    template<class V = void>
+    typename std::enable_if<use_iv, V>::type
+    _set_seed_internal(integer seed)
     {
         auto sb = decode(seed, KeyLength);
         instance.SetKeyWithIV(sb.second, sb.first, zero_buffer);
+    }
+    
+    template<class V = void>
+    typename std::enable_if<!use_iv, V>::type
+    _set_seed_internal(integer seed)
+    {
+        auto sb = decode(seed, KeyLength);
+        instance.SetKey(sb.second, sb.first);
+    }
+    
+    virtual void set_seed(integer seed)
+    {
+        this->_set_seed_internal(seed);
     }
     
     virtual void next()
@@ -49,7 +64,7 @@ struct cryptopp_rng_impl : public blocked_rng
 bit_function_p cryptopp_rng::from_string(std::string name)
 {
     if (name == "RC4")
-        return std::make_shared<cryptopp_rng_impl<CryptoPP::Weak::ARC4::Encryption, 32, 32>>();
+        return std::make_shared<cryptopp_rng_impl<CryptoPP::Weak::ARC4::Encryption, 32, 32, false>>();
     if (name == "CHACHA-20")
         return std::make_shared<cryptopp_rng_impl<CryptoPP::ChaCha20::Encryption, 32, 32>>();
     if (name == "SALSA-20")
